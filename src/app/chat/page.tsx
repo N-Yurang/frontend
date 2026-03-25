@@ -1,24 +1,17 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send, Bot } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 
 interface Message {
   id: string;
-  role: "user" | "ai";
+  role: 'user' | 'ai';
   content: string;
 }
 
-export default function Chatbot() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "ai",
-      content: "안녕하세요! 캡스톤 여행 AI입니다. 🤖\n어떤 분위기의 여행을 떠나고 싶으신가요? (예: 바다가 보이는 조용한 카페 추천해줘)",
-    },
-  ]);
+export default function TripAIChat() {
   const [input, setInput] = useState("");
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -28,26 +21,53 @@ export default function Chatbot() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading]);
+  }, [messages]);
 
-  const handleSend = () => {
-    if (!input.trim()) return;
+  const handleSend = async () => {
+    if (!input.trim() || isLoading) return;
 
-    const userMsg: Message = { id: Date.now().toString(), role: "user", content: input };
+    // 1. 사용자 메시지 추가
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input,
+    };
     setMessages((prev) => [...prev, userMsg]);
+    const currentInput = input; // 입력값 백업
     setInput("");
     setIsLoading(true);
 
-    // Mock AI Response
-    setTimeout(() => {
-      const aiMsg: Message = {
+    // 2. 파이썬 AI 서버 연동
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_message: currentInput }),
+      });
+
+      const data = await response.json();
+
+      if (data.status === "success") {
+        const aiMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "ai",
+          content: data.ai_reply,
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      console.error("AI 연결 실패:", error);
+      const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        content: "사진 찍기 좋은 당일치기 데이트라면, 최근 SNS에서 '촌캉스'로 뜨고 있는 충남 부여를 추천해 드려요! 📸\n\n일정을 짜드릴까요?",
+        content: "죄송해요, AI 서버와 연결이 끊겼어요. 파이썬 터미널을 확인해 주세요!",
       };
-      setMessages((prev) => [...prev, aiMsg]);
+      setMessages((prev) => [...prev, errorMsg]);
+    } finally {
       setIsLoading(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -64,19 +84,18 @@ export default function Chatbot() {
             animate={{ opacity: 1, y: 0 }}
             className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
           >
-            <div className={`shadow-sm whitespace-pre-line px-4 py-3 text-[15px] leading-[1.6] ${
-                msg.role === "user"
-                  ? "bg-brand-red text-white rounded-2xl rounded-tr-sm max-w-[85%]"
-                  : "bg-[#f8f9fa] text-gray-800 border border-gray-100 rounded-2xl rounded-tl-sm max-w-[85%]"
-              }`}>
-                {msg.content}
+            <div className={`shadow-sm whitespace-pre-line px-4 py-3 text-[15px] leading-relaxed 
+              ${msg.role === "user"
+                ? "bg-[#f26b60] text-white rounded-2xl rounded-tr-sm max-w-[85%]"
+                : "bg-[#f8f9fa] text-gray-800 border border-gray-100 rounded-2xl rounded-tl-sm max-w-[85%]"}`}>
+              {msg.content}
             </div>
           </motion.div>
         ))}
 
         {isLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start">
-            <div className="bg-[#f8f9fa] border border-gray-100 px-5 py-4 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5">
+            <div className="bg-[#f8f9fa] border border-gray-100 px-5 py-4 rounded-2xl rounded-tl-sm flex gap-1">
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
@@ -87,20 +106,20 @@ export default function Chatbot() {
       </div>
 
       <div className="p-4 bg-white">
-        <div className="relative flex items-center bg-white border border-gray-200 rounded-3xl pl-4 pr-1.5 py-1.5 shadow-sm">
+        <div className="relative flex items-center bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm focus-within:border-gray-400 transition-colors">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="메시지를 입력하세요..."
-            className="w-full text-[15px] outline-none bg-transparent placeholder-gray-400 text-gray-800"
+            className="w-full text-[15px] outline-none bg-transparent placeholder-gray-400"
             disabled={isLoading}
           />
           <button
             onClick={handleSend}
             disabled={!input.trim() || isLoading}
-            className="flex-shrink-0 px-4 h-10 flex items-center justify-center bg-[#2b2b2b] text-white rounded-full text-sm font-semibold disabled:bg-gray-200 disabled:text-gray-400 transition-colors ml-2"
+            className="flex-shrink-0 px-4 h-10 flex items-center justify-center bg-[#2b2b2b] text-white rounded-xl font-medium text-[14px] disabled:bg-gray-200 disabled:text-gray-400 transition-colors ml-2"
           >
             전송
           </button>
