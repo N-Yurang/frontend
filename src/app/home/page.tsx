@@ -1,5 +1,19 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Search, MapPin, Calendar, Flame } from "lucide-react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
+
+const SEARCH_PLACEHOLDERS = [
+  "어디로 떠나볼까요? (예: 영월)",
+  "바다 냄새 물씬 나는 오션뷰 명소",
+  "드라마 발자취 따라가기",
+  "지금 가장 핫한 촬영지 TOP5",
+  "야경이 가장 아름다운 숨은 아지트",
+  "오늘 본 드라마 속 그 골목, 실제로 걸어볼까요?",
+  "엔딩 크레딧이 올라가면 시작되는 당신만의 여행",
+];
 
 const FESTIVALS = [
   { id: 1, title: "제주 들불축제", image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?auto=format&fit=crop&q=80&w=400&h=300" },
@@ -32,6 +46,17 @@ const TRENDING_MEDIA = [
 ];
 
 export default function Home() {
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [isFocused, setIsFocused] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlaceholderIndex((prev) => (prev + 1) % SEARCH_PLACEHOLDERS.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen bg-white pb-20">
       {/* Header */}
@@ -42,15 +67,36 @@ export default function Home() {
           </h1>
         </div>
 
-        <div className="relative mb-2">
-          <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+        <div className="relative mb-2 flex items-center h-[46px] bg-gray-100 rounded-full focus-within:bg-white focus-within:ring-1 focus-within:ring-brand-red transition-all">
+          <div className="absolute left-4 flex items-center pointer-events-none z-10">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
+
           <input
             type="text"
-            className="w-full pl-11 pr-4 py-3 bg-gray-100 border-transparent rounded-full text-[15px] focus:border-brand-red focus:bg-white focus:ring-1 focus:ring-brand-red font-medium transition-all outline-none"
-            placeholder="어디로 떠나볼까요? (예: 영월)"
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            className="w-full h-full pl-11 pr-4 bg-transparent border-transparent text-[15px] font-medium outline-none z-10 relative"
           />
+
+          {!isFocused && !searchValue && (
+            <div className="absolute inset-y-0 left-11 right-4 flex items-center pointer-events-none overflow-hidden">
+              <AnimatePresence>
+                <motion.div
+                  key={placeholderIndex}
+                  initial={{ y: 25, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -25, opacity: 0 }}
+                  transition={{ duration: 0.5, ease: "easeOut" }}
+                  className="text-[15px] text-gray-400 font-medium absolute w-full truncate"
+                >
+                  {SEARCH_PLACEHOLDERS[placeholderIndex]}
+                </motion.div>
+              </AnimatePresence>
+            </div>
+          )}
         </div>
       </header>
 
