@@ -71,9 +71,9 @@ export default function TripAIChat() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-white relative">
-      <div className="pt-12 pb-4 bg-white sticky top-0 z-10">
-        <h1 className="text-[17px] font-bold text-center text-gray-900">AI 챗봇 상담</h1>
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-white dark:bg-gray-950 relative transition-colors duration-300">
+      <div className="pt-12 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 transition-colors duration-300">
+        <h1 className="text-[17px] font-bold text-center text-gray-900 dark:text-gray-100 transition-colors">AI 챗봇 상담</h1>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 scrollbar-hide space-y-6">
@@ -84,10 +84,10 @@ export default function TripAIChat() {
             animate={{ opacity: 1, y: 0 }}
             className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
           >
-            <div className={`shadow-sm whitespace-pre-line px-4 py-3 text-[15px] leading-relaxed 
+            <div className={`shadow-sm whitespace-pre-line px-4 py-3 text-[15px] leading-relaxed transition-colors
               ${msg.role === "user"
                 ? "bg-[#f26b60] text-white rounded-2xl rounded-tr-sm max-w-[85%]"
-                : "bg-[#f8f9fa] text-gray-800 border border-gray-100 rounded-2xl rounded-tl-sm max-w-[85%]"}`}>
+                : "bg-[#f8f9fa] dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-2xl rounded-tl-sm max-w-[85%]"}`}>
               {msg.content}
             </div>
           </motion.div>
@@ -95,7 +95,7 @@ export default function TripAIChat() {
 
         {isLoading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start">
-            <div className="bg-[#f8f9fa] border border-gray-100 px-5 py-4 rounded-2xl rounded-tl-sm flex gap-1">
+            <div className="bg-[#f8f9fa] dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-5 py-4 rounded-2xl rounded-tl-sm flex gap-1 transition-colors">
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
               <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
@@ -105,15 +105,15 @@ export default function TripAIChat() {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 bg-white">
-        <div className="relative flex items-center bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm focus-within:border-gray-400 transition-colors">
+      <div className="p-4 bg-white dark:bg-gray-950 transition-colors duration-300">
+        <div className="relative flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-2 shadow-sm focus-within:border-gray-400 dark:focus-within:border-gray-600 transition-colors duration-300">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
             placeholder="메시지를 입력하세요..."
-            className="w-full text-[15px] outline-none bg-transparent placeholder-gray-400"
+            className="w-full text-[15px] outline-none bg-transparent placeholder-gray-400 dark:text-white"
             disabled={isLoading}
           />
           <button

@@ -58,16 +58,16 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white pb-20">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 pb-20 transition-colors duration-300">
       {/* Header */}
-      <header className="px-5 pt-12 pb-2 bg-white sticky top-0 z-10">
+      <header className="px-5 pt-12 pb-2 bg-white dark:bg-gray-950 sticky top-0 z-10 transition-colors duration-300">
         <div className="flex justify-center items-center mb-4">
           <h1 className="text-xl font-black text-brand-red tracking-widest">
             TRIPLY
           </h1>
         </div>
 
-        <div className="relative mb-2 flex items-center h-[46px] bg-gray-100 rounded-full focus-within:bg-white focus-within:ring-1 focus-within:ring-brand-red transition-all">
+        <div className="relative mb-2 flex items-center h-[46px] bg-gray-100 dark:bg-gray-800 rounded-full focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:ring-1 focus-within:ring-brand-red dark:focus-within:ring-brand-red transition-all">
           <div className="absolute left-4 flex items-center pointer-events-none z-10">
             <Search className="h-5 w-5 text-gray-400" />
           </div>
@@ -78,7 +78,7 @@ export default function Home() {
             onChange={(e) => setSearchValue(e.target.value)}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
-            className="w-full h-full pl-11 pr-4 bg-transparent border-transparent text-[15px] font-medium outline-none z-10 relative"
+            className="w-full h-full pl-11 pr-4 bg-transparent border-transparent text-[15px] font-medium outline-none z-10 relative dark:text-white"
           />
 
           {!isFocused && !searchValue && (
@@ -102,7 +102,7 @@ export default function Home() {
 
       {/* Media Trend Destinations */}
       <section className="mt-4 px-5">
-        <h2 className="flex items-center text-lg font-bold text-gray-900 mb-4 gap-1.5">
+        <h2 className="flex items-center text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 gap-1.5 transition-colors duration-300">
           <span className="text-xl">🔥</span> 지금 뜨는 미디어 속 여행지
         </h2>
         <div className="flex flex-col gap-4">
@@ -133,13 +133,13 @@ export default function Home() {
 
       {/* Hidden Destinations */}
       <section className="mt-8 px-5">
-        <h2 className="flex items-center text-lg font-bold text-gray-900 mb-4 gap-1.5">
+        <h2 className="flex items-center text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 gap-1.5 transition-colors duration-300">
           <span className="text-xl">🌿</span> 숨은 여행지
         </h2>
         <div className="grid grid-cols-2 gap-3">
           {HIDDEN_DESTINATIONS.map((item) => (
             <div key={item.id} className="group cursor-pointer">
-              <div className="relative h-40 w-full rounded-2xl overflow-hidden mb-2 shadow-sm bg-gray-100">
+              <div className="relative h-40 w-full rounded-2xl overflow-hidden mb-2 shadow-sm bg-gray-100 dark:bg-gray-800 transition-colors duration-300">
                 <Image
                   src={item.image}
                   alt={item.title}
@@ -148,8 +148,8 @@ export default function Home() {
                   sizes="(max-width: 480px) 50vw, 25vw"
                 />
               </div>
-              <h3 className="font-bold text-gray-800 text-[14px] leading-tight mb-0.5">{item.title}</h3>
-              <p className="text-[12px] text-gray-500 flex items-center gap-0.5">
+              <h3 className="font-bold text-gray-800 dark:text-gray-100 text-[14px] leading-tight mb-0.5">{item.title}</h3>
+              <p className="text-[12px] text-gray-500 dark:text-gray-400 flex items-center gap-0.5">
                 <MapPin className="w-3 h-3" /> {item.location}
               </p>
             </div>
@@ -159,13 +159,13 @@ export default function Home() {
 
       {/* Monthly Festivals */}
       <section className="mt-8 px-5">
-        <h2 className="flex items-center text-lg font-bold text-gray-900 mb-4 gap-1.5">
+        <h2 className="flex items-center text-lg font-bold text-gray-900 dark:text-gray-100 mb-4 gap-1.5 transition-colors duration-300">
           <span className="text-gray-400">📅</span> 이달의 축제 (3월)
         </h2>
         <div className="flex overflow-x-auto gap-4 pb-4 -mx-5 px-5">
           {FESTIVALS.map((item) => (
             <div key={item.id} className="min-w-[140px] flex-shrink-0 group cursor-pointer">
-              <div className="relative h-36 w-full rounded-2xl overflow-hidden mb-2 shadow-sm bg-gray-100">
+              <div className="relative h-36 w-full rounded-2xl overflow-hidden mb-2 shadow-sm bg-gray-100 dark:bg-gray-800 transition-colors duration-300">
                 <Image
                   src={item.image}
                   alt={item.title}
@@ -174,7 +174,7 @@ export default function Home() {
                   sizes="(max-width: 480px) 50vw, 33vw"
                 />
               </div>
-              <h3 className="font-semibold text-gray-800 text-[14px] text-center">{item.title}</h3>
+              <h3 className="font-semibold text-gray-800 dark:text-gray-100 text-[14px] text-center">{item.title}</h3>
             </div>
           ))}
         </div>

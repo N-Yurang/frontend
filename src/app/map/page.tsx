@@ -18,28 +18,28 @@ export default function CourseMap() {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen bg-white pb-20">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 pb-20 transition-colors duration-300">
       {/* Header */}
-      <div className="pt-12 pb-4 bg-white sticky top-0 z-10 border-b border-gray-50">
-        <h1 className="text-[17px] font-bold text-center text-gray-900">추천 코스 및 지도</h1>
+      <div className="pt-12 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 border-b border-gray-50 dark:border-gray-800 transition-colors duration-300">
+        <h1 className="text-[17px] font-bold text-center text-gray-900 dark:text-gray-100 transition-colors">추천 코스 및 지도</h1>
       </div>
 
       {/* Map Area Placeholder */}
-      <div className="h-[45vh] bg-[#e5e5e5] relative flex flex-col items-center justify-center">
-        <p className="text-gray-600 font-bold text-[15px] flex items-center gap-1.5">
+      <div className="h-[45vh] bg-[#e5e5e5] dark:bg-gray-800 relative flex flex-col items-center justify-center transition-colors duration-300">
+        <p className="text-gray-600 dark:text-gray-400 font-bold text-[15px] flex items-center gap-1.5 transition-colors">
           <span className="text-xl">🗺️</span> 카카오맵/구글맵 API 연동 영역
         </p>
       </div>
 
       {/* Itinerary Timeline */}
-      <div className="flex-1 bg-white px-5 pt-6 pb-8">
-        <h2 className="flex items-center text-[17px] font-bold text-gray-900 mb-6 gap-2">
+      <div className="flex-1 bg-white dark:bg-gray-950 px-5 pt-6 pb-8 transition-colors duration-300">
+        <h2 className="flex items-center text-[17px] font-bold text-gray-900 dark:text-gray-100 mb-6 gap-2 transition-colors">
           <span className="text-xl">📍</span> AI 추천 당일치기 동선
         </h2>
 
         <div className="relative pl-2">
           {/* Vertical Line connecting the dots */}
-          <div className="absolute left-[30px] top-6 bottom-6 w-[1px] bg-gray-200"></div>
+          <div className="absolute left-[30px] top-6 bottom-6 w-[1px] bg-gray-200 dark:bg-gray-700 transition-colors"></div>
 
           <div className="space-y-6">
             {ITINERARY.map((item, index) => (
@@ -48,9 +48,9 @@ export default function CourseMap() {
                   {item.id}
                 </div>
                 
-                <div className="flex flex-col items-start justify-center pt-1 w-full border-b border-gray-100 pb-5">
-                  <h3 className="font-bold text-gray-900 text-[16px] mb-1">{item.name}</h3>
-                  <p className="text-[13px] text-gray-500 leading-snug">{item.desc}</p>
+                <div className="flex flex-col items-start justify-center pt-1 w-full border-b border-gray-100 dark:border-gray-800 pb-5 transition-colors">
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[16px] mb-1 transition-colors">{item.name}</h3>
+                  <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-snug transition-colors">{item.desc}</p>
                 </div>
               </div>
             ))}

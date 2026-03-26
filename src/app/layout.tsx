@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/layout/BottomNav";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,14 +36,17 @@ export default function RootLayout({
     <html
       lang="ko"
       className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      suppressHydrationWarning
     >
-      <body className="bg-gray-100 flex justify-center min-h-screen">
-        <div className="w-full max-w-[480px] bg-white min-h-screen relative shadow-2xl flex flex-col overflow-x-hidden">
-          <main className="flex-1 pb-16">
-            {children}
-          </main>
-          <BottomNav />
-        </div>
+      <body className="bg-gray-100 dark:bg-black flex justify-center min-h-screen transition-colors">
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <div className="w-full max-w-[480px] bg-white dark:bg-gray-950 min-h-screen relative shadow-2xl flex flex-col overflow-x-hidden text-gray-900 dark:text-gray-100 transition-colors">
+            <main className="flex-1 pb-16">
+              {children}
+            </main>
+            <BottomNav />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

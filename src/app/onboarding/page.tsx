@@ -50,14 +50,14 @@ export default function Onboarding() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-white">
+    <div className="flex min-h-screen flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
       <motion.div
-        className="px-6 pt-16 pb-6 bg-white sticky top-0 z-10 border-b border-gray-100/50 backdrop-blur-md"
+        className="px-6 pt-16 pb-6 bg-white/80 dark:bg-gray-950/80 sticky top-0 z-10 border-b border-gray-100/50 dark:border-gray-800 backdrop-blur-md transition-colors"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-2">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-snug mb-2">
           반가워요!<br />
           당신만의 여행 플레이리스트를 만들기 위해 몇가지 질문을 드릴게요.
         </h1>
@@ -72,39 +72,39 @@ export default function Onboarding() {
         >
           {/* Name */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900">1. 이름</label>
+            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">1. 이름</label>
             <input
               type="text"
               placeholder="이름을 입력해주세요"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all"
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all dark:text-white"
             />
           </motion.div>
 
           {/* Info (Age / Gender) */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900">2. 내 정보 (나이, 성별)</label>
+            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">2. 내 정보 (나이, 성별)</label>
             <div className="flex gap-3">
               <input
                 type="number"
                 placeholder="나이 (예: 25)"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                className="w-1/2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all"
+                className="w-1/2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all dark:text-white"
               />
-              <div className="w-1/2 flex bg-gray-50 border border-gray-200 rounded-xl p-1">
+              <div className="w-1/2 flex bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-1">
                 <button
                   type="button"
                   onClick={() => setGender("M")}
-                  className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "M" ? "bg-white text-brand-blue shadow-sm font-bold" : "text-gray-500"}`}
+                  className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "M" ? "bg-white dark:bg-gray-800 text-brand-blue dark:text-blue-400 shadow-sm font-bold" : "text-gray-500 dark:text-gray-400"}`}
                 >
                   남성
                 </button>
                 <button
                   type="button"
                   onClick={() => setGender("F")}
-                  className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "F" ? "bg-white text-brand-blue shadow-sm font-bold" : "text-gray-500"}`}
+                  className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "F" ? "bg-white dark:bg-gray-800 text-brand-blue dark:text-blue-400 shadow-sm font-bold" : "text-gray-500 dark:text-gray-400"}`}
                 >
                   여성
                 </button>
@@ -114,8 +114,8 @@ export default function Onboarding() {
 
           {/* Tags */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900">3. 나의 여행 취향</label>
-            <p className="text-xs text-gray-500 mb-2">원하는 만큼 해시태그를 선택해주세요.</p>
+            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">3. 나의 여행 취향</label>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">원하는 만큼 해시태그를 선택해주세요.</p>
             <div className="flex flex-wrap gap-2.5">
               {TAGS.map((tag) => {
                 const isSelected = selectedTags.includes(tag);
@@ -125,8 +125,8 @@ export default function Onboarding() {
                     type="button"
                     onClick={() => toggleTag(tag)}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-colors border ${isSelected
-                        ? "bg-brand-blue text-white border-brand-blue"
-                        : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
+                        ? "bg-brand-blue text-white border-brand-blue dark:border-blue-500"
+                        : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                       }`}
                   >
                     #{tag}
@@ -138,7 +138,7 @@ export default function Onboarding() {
 
           {/* Frequency */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900">4. 여행의 빈도는 어떻게 되나요?</label>
+            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">4. 여행의 빈도는 어떻게 되나요?</label>
             <div className="flex flex-col gap-2.5">
               {FREQUENCIES.map((freq) => (
                 <button
@@ -146,13 +146,13 @@ export default function Onboarding() {
                   type="button"
                   onClick={() => setFrequency(freq)}
                   className={`flex items-center justify-between w-full px-4 py-3.5 border rounded-xl text-sm font-medium transition-all ${frequency === freq
-                      ? "border-brand-blue bg-blue-50/50 text-brand-blue"
-                      : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                      ? "border-brand-blue bg-blue-50/50 dark:bg-blue-900/20 text-brand-blue dark:text-blue-400"
+                      : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                     }`}
                 >
                   {freq}
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${frequency === freq ? "border-brand-blue" : "border-gray-300"}`}>
-                    {frequency === freq && <div className="w-2.5 h-2.5 bg-brand-blue rounded-full" />}
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${frequency === freq ? "border-brand-blue dark:border-blue-400" : "border-gray-300 dark:border-gray-600"}`}>
+                    {frequency === freq && <div className="w-2.5 h-2.5 bg-brand-blue dark:bg-blue-400 rounded-full" />}
                   </div>
                 </button>
               ))}
@@ -162,7 +162,7 @@ export default function Onboarding() {
       </div>
 
       <motion.div
-        className="fixed bottom-0 left-0 right-0 p-5 bg-white border-t border-gray-100 max-w-[480px] mx-auto z-20 pb-safe"
+        className="fixed bottom-0 left-0 right-0 p-5 bg-white/90 dark:bg-gray-950/90 backdrop-blur-sm border-t border-gray-100 dark:border-gray-800 max-w-[480px] mx-auto z-20 pb-safe transition-colors"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.5 }}
