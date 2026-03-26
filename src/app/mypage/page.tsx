@@ -1,7 +1,30 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { User, Edit2 } from "lucide-react";
 
 export default function MyPage() {
-  const TAGS = ["미디어트렌드", "숨은명소", "로컬맛집", "대중교통"];
+  const [userName, setUserName] = useState("여행자");
+  const [tags, setTags] = useState<string[]>(["미디어트렌드", "숨은명소", "로컬맛집", "대중교통"]);
+
+  useEffect(() => {
+    const storedName = localStorage.getItem('userName');
+    if (storedName) {
+      setUserName(storedName);
+    }
+    
+    const storedTags = localStorage.getItem('userTags');
+    if (storedTags) {
+      try {
+        const parsedTags = JSON.parse(storedTags);
+        if (Array.isArray(parsedTags) && parsedTags.length > 0) {
+          setTags(parsedTags);
+        }
+      } catch (e) {
+        console.error("Failed to parse stored tags");
+      }
+    }
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fdfbfb] pb-20">
@@ -17,7 +40,7 @@ export default function MyPage() {
               <User size={28} fill="currentColor" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-1">여행자 님</h2>
+              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-1">{userName}님</h2>
               <p className="text-xs text-gray-400 mt-0.5 font-medium">ID: 202210127</p>
             </div>
           </div>
@@ -32,7 +55,7 @@ export default function MyPage() {
             <span>✨</span> 나의 여행 취향
           </h3>
           <div className="flex flex-wrap gap-2.5">
-            {TAGS.map((tag) => (
+            {tags.map((tag) => (
               <span key={tag} className="border border-brand-red text-brand-red text-sm px-3.5 py-1.5 rounded-full font-medium shadow-sm">
                 #{tag}
               </span>

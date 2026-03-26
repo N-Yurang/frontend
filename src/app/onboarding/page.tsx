@@ -11,12 +11,12 @@ const TAGS = [
 ];
 
 const FREQUENCIES = [
-  "1년에 1~2회", "계절마다 1회", "한 달에 1회", "주말마다 떠나요!"
+  "거의 안 가요", "1년에 1~2회", "계절마다 1회", "한 달에 1회", "주말마다 떠나요!"
 ];
 
 export default function Onboarding() {
   const router = useRouter();
-  
+
   // Form State
   const [name, setName] = useState("");
   const [age, setAge] = useState("");
@@ -38,6 +38,8 @@ export default function Onboarding() {
     e.preventDefault();
     if (isFormValid) {
       // Typically save user info to context, localStorage, or API
+      localStorage.setItem('userName', name);
+      localStorage.setItem('userTags', JSON.stringify(selectedTags));
       router.push("/home");
     }
   };
@@ -49,31 +51,31 @@ export default function Onboarding() {
 
   return (
     <div className="flex min-h-screen flex-col bg-white">
-      <motion.div 
+      <motion.div
         className="px-6 pt-16 pb-6 bg-white sticky top-0 z-10 border-b border-gray-100/50 backdrop-blur-md"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <h1 className="text-2xl font-bold text-gray-900 leading-snug mb-2">
-          반가워요!<br/>
+          반가워요!<br />
           당신만의 여행 플레이리스트를 만들기 위해 몇가지 질문을 드릴게요.
         </h1>
       </motion.div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 pb-32">
-        <motion.form 
-          initial="hidden" 
-          animate="visible" 
+        <motion.form
+          initial="hidden"
+          animate="visible"
           variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
           className="space-y-8"
         >
           {/* Name */}
           <motion.div variants={itemVariants} className="space-y-3">
             <label className="block text-base font-bold text-gray-900">1. 이름</label>
-            <input 
-              type="text" 
-              placeholder="이름을 입력해주세요" 
+            <input
+              type="text"
+              placeholder="이름을 입력해주세요"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all"
@@ -84,22 +86,22 @@ export default function Onboarding() {
           <motion.div variants={itemVariants} className="space-y-3">
             <label className="block text-base font-bold text-gray-900">2. 내 정보 (나이, 성별)</label>
             <div className="flex gap-3">
-              <input 
-                type="number" 
-                placeholder="나이 (예: 25)" 
+              <input
+                type="number"
+                placeholder="나이 (예: 25)"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
                 className="w-1/2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all"
               />
               <div className="w-1/2 flex bg-gray-50 border border-gray-200 rounded-xl p-1">
-                <button 
+                <button
                   type="button"
                   onClick={() => setGender("M")}
                   className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "M" ? "bg-white text-brand-blue shadow-sm font-bold" : "text-gray-500"}`}
                 >
                   남성
                 </button>
-                <button 
+                <button
                   type="button"
                   onClick={() => setGender("F")}
                   className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "F" ? "bg-white text-brand-blue shadow-sm font-bold" : "text-gray-500"}`}
@@ -122,11 +124,10 @@ export default function Onboarding() {
                     key={tag}
                     type="button"
                     onClick={() => toggleTag(tag)}
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors border ${
-                      isSelected
+                    className={`rounded-full px-4 py-2 text-sm font-medium transition-colors border ${isSelected
                         ? "bg-brand-blue text-white border-brand-blue"
                         : "bg-white text-gray-600 border-gray-200 hover:bg-gray-50"
-                    }`}
+                      }`}
                   >
                     #{tag}
                   </button>
@@ -144,11 +145,10 @@ export default function Onboarding() {
                   key={freq}
                   type="button"
                   onClick={() => setFrequency(freq)}
-                  className={`flex items-center justify-between w-full px-4 py-3.5 border rounded-xl text-sm font-medium transition-all ${
-                    frequency === freq 
-                      ? "border-brand-blue bg-blue-50/50 text-brand-blue" 
+                  className={`flex items-center justify-between w-full px-4 py-3.5 border rounded-xl text-sm font-medium transition-all ${frequency === freq
+                      ? "border-brand-blue bg-blue-50/50 text-brand-blue"
                       : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
-                  }`}
+                    }`}
                 >
                   {freq}
                   <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${frequency === freq ? "border-brand-blue" : "border-gray-300"}`}>
@@ -161,7 +161,7 @@ export default function Onboarding() {
         </motion.form>
       </div>
 
-      <motion.div 
+      <motion.div
         className="fixed bottom-0 left-0 right-0 p-5 bg-white border-t border-gray-100 max-w-[480px] mx-auto z-20 pb-safe"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}

@@ -5,20 +5,29 @@ const FESTIVALS = [
   { id: 1, title: "제주 들불축제", image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?auto=format&fit=crop&q=80&w=400&h=300" },
   { id: 2, title: "진해 군항제", image: "https://images.unsplash.com/photo-1617180236048-bdabae82e2ec?auto=format&fit=crop&q=80&w=400&h=300" },
   { id: 3, title: "에버랜드 장미축제", image: "https://images.unsplash.com/photo-1554559388-755cc8bd75a9?auto=format&fit=crop&q=80&w=400&h=300" },
+  { id: 4, title: "부산 불꽃축제", image: "https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?auto=format&fit=crop&q=80&w=400&h=300" },
+  { id: 5, title: "여의도 벚꽃축제", image: "https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?auto=format&fit=crop&q=80&w=400&h=300" }
+];
+
+const HIDDEN_DESTINATIONS = [
+  { id: 201, title: "비밀의 숲 안돌오름", location: "제주 구좌읍", image: "https://images.unsplash.com/photo-1521742617637-268e37130dfc?auto=format&fit=crop&q=80&w=400&h=300" },
+  { id: 202, title: "수로부인 헌화공원", location: "강원 삼척", image: "https://images.unsplash.com/photo-1588614486676-e1f9a2fbde64?auto=format&fit=crop&q=80&w=400&h=300" },
+  { id: 203, title: "다랭이마을 계단식 논", location: "경남 남해", image: "https://images.unsplash.com/photo-1617180236048-bdabae82e2ec?auto=format&fit=crop&q=80&w=400&h=300" },
+  { id: 204, title: "벌교 갯벌", location: "전남 보성", image: "https://images.unsplash.com/photo-1612458428172-23c58cc440d4?auto=format&fit=crop&q=80&w=400&h=300" }
 ];
 
 const TRENDING_MEDIA = [
-  { 
-    id: 101, 
-    badge: "천만 영화 트렌드", 
-    title: "'왕의 남자' 촬영지!\n새롭게 뜨는 여행지 영월", 
-    image: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=800&q=80" 
+  {
+    id: 101,
+    badge: "천만 영화 트렌드",
+    title: "'왕의 남자' 촬영지!\n새롭게 뜨는 여행지 영월",
+    image: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=800&q=80"
   },
-  { 
-    id: 102, 
-    badge: "인기 예능 등장", 
-    title: "힐링 예능 촬영지,\n숨은 낭만 고흥으로 떠나요", 
-    image: "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80" 
+  {
+    id: 102,
+    badge: "인기 예능 등장",
+    title: "힐링 예능 촬영지,\n숨은 낭만 고흥으로 떠나요",
+    image: "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80"
   },
 ];
 
@@ -62,7 +71,7 @@ export default function Home() {
               />
               {/* Gradient Overlay for Text */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-              
+
               <div className="absolute bottom-5 left-5 right-5 text-white">
                 <span className="inline-block bg-brand-red text-white text-[11px] font-bold px-2.5 py-1 rounded-full mb-2">
                   {item.badge}
@@ -76,12 +85,38 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Hidden Destinations */}
+      <section className="mt-8 px-5">
+        <h2 className="flex items-center text-lg font-bold text-gray-900 mb-4 gap-1.5">
+          <span className="text-xl">🌿</span> 숨은 여행지
+        </h2>
+        <div className="grid grid-cols-2 gap-3">
+          {HIDDEN_DESTINATIONS.map((item) => (
+            <div key={item.id} className="group cursor-pointer">
+              <div className="relative h-40 w-full rounded-2xl overflow-hidden mb-2 shadow-sm bg-gray-100">
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  fill
+                  className="object-cover group-hover:scale-105 transition-transform duration-500"
+                  sizes="(max-width: 480px) 50vw, 25vw"
+                />
+              </div>
+              <h3 className="font-bold text-gray-800 text-[14px] leading-tight mb-0.5">{item.title}</h3>
+              <p className="text-[12px] text-gray-500 flex items-center gap-0.5">
+                <MapPin className="w-3 h-3" /> {item.location}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Monthly Festivals */}
       <section className="mt-8 px-5">
         <h2 className="flex items-center text-lg font-bold text-gray-900 mb-4 gap-1.5">
           <span className="text-gray-400">📅</span> 이달의 축제 (3월)
         </h2>
-        <div className="flex overflow-x-auto gap-4 pb-4 scrollbar-hide -mx-5 px-5">
+        <div className="flex overflow-x-auto gap-4 pb-4 -mx-5 px-5">
           {FESTIVALS.map((item) => (
             <div key={item.id} className="min-w-[140px] flex-shrink-0 group cursor-pointer">
               <div className="relative h-36 w-full rounded-2xl overflow-hidden mb-2 shadow-sm bg-gray-100">
