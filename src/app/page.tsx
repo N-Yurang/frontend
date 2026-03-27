@@ -16,14 +16,14 @@ export default function Splash() {
   }, [router]);
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-br from-brand-blue to-teal-400">
+    <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-br from-brand-red to-brand-orange">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="flex flex-col items-center"
       >
-        <div className="flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-xl mb-6 text-brand-blue">
+        <div className="flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-xl mb-6 text-brand-red">
           <PlayCircle size={48} strokeWidth={1.5} />
         </div>
         <motion.h1
@@ -38,7 +38,7 @@ export default function Splash() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 1 }}
-          className="text-blue-50 text-base font-medium tracking-wide"
+          className="text-red-50 text-base font-medium tracking-wide"
         >
           너만의 Trip playlist를 만들어봐
         </motion.p>

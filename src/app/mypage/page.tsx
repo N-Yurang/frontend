@@ -4,11 +4,25 @@ import { useState, useEffect, useEffect as ReactUseEffect } from "react";
 import { User, Edit2, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 
+const TAGS = [
+  "자연친화", "휴식", "가족여행", "혼자", "익스트림", "커플",
+  "맛집탐방", "도심야경", "사진명소", "가성비", "럭셔리", "역사/문화"
+];
+
 export default function MyPage() {
   const [userName, setUserName] = useState("여행자");
-  const [tags, setTags] = useState<string[]>(["미디어트렌드", "숨은명소", "로컬맛집", "대중교통"]);
+  const [tags, setTags] = useState<string[]>(["자연친화", "사진명소", "맛집탐방"]);
   const { theme, setTheme } = useTheme();
   const [isThemeOpen, setIsThemeOpen] = useState(false);
+  const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
+
+  const toggleTag = (tag: string) => {
+    setTags((prev) => {
+      const newTags = prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag];
+      localStorage.setItem('userTags', JSON.stringify(newTags));
+      return newTags;
+    });
+  };
 
   useEffect(() => {
     const storedName = localStorage.getItem('userName');
@@ -69,7 +83,10 @@ export default function MyPage() {
                 #{tag}
               </span>
             ))}
-            <button className="border border-dashed border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm px-3.5 py-1.5 rounded-full font-medium transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-1">
+            <button 
+              onClick={() => setIsTagsModalOpen(true)}
+              className="border border-dashed border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm px-3.5 py-1.5 rounded-full font-medium transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-1"
+            >
               + 추가
             </button>
           </div>
@@ -120,6 +137,38 @@ export default function MyPage() {
               <button onClick={() => { setTheme('system'); setIsThemeOpen(false); }} className={`py-3 px-4 rounded-xl text-left font-medium transition-colors ${theme === 'system' ? 'bg-brand-red text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
                 시스템 설정 💻
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tags Settings Modal */}
+      {isTagsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setIsTagsModalOpen(false)}>
+          <div className="bg-white dark:bg-gray-900 w-[90%] max-w-[360px] rounded-2xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white">여행 취향 수정</h2>
+              <button onClick={() => setIsTagsModalOpen(false)} className="text-sm font-bold text-brand-red">완료</button>
+            </div>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">원하는 해시태그를 눌러 선택/해제하세요.</p>
+            <div className="flex flex-wrap gap-2.5 max-h-[40vh] overflow-y-auto pb-2 scrollbar-hide">
+              {TAGS.map((tag) => {
+                const isSelected = tags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors border ${
+                      isSelected
+                        ? "bg-brand-red text-white border-brand-red dark:border-red-500"
+                        : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

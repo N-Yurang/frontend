@@ -78,7 +78,7 @@ export default function Onboarding() {
               placeholder="이름을 입력해주세요"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all dark:text-white"
+              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none transition-all dark:text-white"
             />
           </motion.div>
 
@@ -91,20 +91,20 @@ export default function Onboarding() {
                 placeholder="나이 (예: 25)"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
-                className="w-1/2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-blue focus:ring-1 focus:ring-brand-blue outline-none transition-all dark:text-white"
+                className="w-1/2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none transition-all dark:text-white"
               />
               <div className="w-1/2 flex bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-1">
                 <button
                   type="button"
                   onClick={() => setGender("M")}
-                  className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "M" ? "bg-white dark:bg-gray-800 text-brand-blue dark:text-blue-400 shadow-sm font-bold" : "text-gray-500 dark:text-gray-400"}`}
+                  className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "M" ? "bg-white dark:bg-gray-800 text-brand-red dark:text-red-400 shadow-sm font-bold" : "text-gray-500 dark:text-gray-400"}`}
                 >
                   남성
                 </button>
                 <button
                   type="button"
                   onClick={() => setGender("F")}
-                  className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "F" ? "bg-white dark:bg-gray-800 text-brand-blue dark:text-blue-400 shadow-sm font-bold" : "text-gray-500 dark:text-gray-400"}`}
+                  className={`flex-1 rounded-lg text-sm font-medium transition-colors ${gender === "F" ? "bg-white dark:bg-gray-800 text-brand-red dark:text-red-400 shadow-sm font-bold" : "text-gray-500 dark:text-gray-400"}`}
                 >
                   여성
                 </button>
@@ -125,7 +125,7 @@ export default function Onboarding() {
                     type="button"
                     onClick={() => toggleTag(tag)}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-colors border ${isSelected
-                        ? "bg-brand-blue text-white border-brand-blue dark:border-blue-500"
+                        ? "bg-brand-red text-white border-brand-red dark:border-red-500"
                         : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                       }`}
                   >
@@ -146,13 +146,13 @@ export default function Onboarding() {
                   type="button"
                   onClick={() => setFrequency(freq)}
                   className={`flex items-center justify-between w-full px-4 py-3.5 border rounded-xl text-sm font-medium transition-all ${frequency === freq
-                      ? "border-brand-blue bg-blue-50/50 dark:bg-blue-900/20 text-brand-blue dark:text-blue-400"
+                      ? "border-brand-red bg-red-50/50 dark:bg-red-900/20 text-brand-red dark:text-red-400"
                       : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                     }`}
                 >
                   {freq}
-                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${frequency === freq ? "border-brand-blue dark:border-blue-400" : "border-gray-300 dark:border-gray-600"}`}>
-                    {frequency === freq && <div className="w-2.5 h-2.5 bg-brand-blue dark:bg-blue-400 rounded-full" />}
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${frequency === freq ? "border-brand-red dark:border-red-400" : "border-gray-300 dark:border-gray-600"}`}>
+                    {frequency === freq && <div className="w-2.5 h-2.5 bg-brand-red dark:bg-red-400 rounded-full" />}
                   </div>
                 </button>
               ))}
@@ -168,7 +168,7 @@ export default function Onboarding() {
         transition={{ delay: 0.5, duration: 0.5 }}
       >
         <Button
-          className="w-full text-base h-14 rounded-2xl bg-brand-blue hover:bg-blue-600 transition-all shadow-lg"
+          className="w-full text-base h-14 rounded-2xl bg-brand-red hover:bg-red-600 transition-all shadow-lg text-white"
           onClick={handleSubmit}
           disabled={!isFormValid}
         >
