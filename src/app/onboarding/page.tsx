@@ -52,15 +52,20 @@ export default function Onboarding() {
   return (
     <div className="flex min-h-screen flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
       <motion.div
-        className="px-6 pt-16 pb-6 bg-white/80 dark:bg-gray-950/80 sticky top-0 z-10 border-b border-gray-100/50 dark:border-gray-800 backdrop-blur-md transition-colors"
+        className="px-6 pt-6 pb-4 bg-white/80 dark:bg-gray-950/80 sticky top-0 z-10 border-b border-gray-100/50 dark:border-gray-800 backdrop-blur-md transition-colors"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-snug mb-2">
-          반가워요!<br />
-          당신만의 여행 플레이리스트를 만들기 위해 몇가지 질문을 드릴게요.
-        </h1>
+        <div className="text-center mb-2">
+          <h1 className="text-3xl font-extrabold text-[#ff6b8b] mb-3">
+            반가워요!
+          </h1>
+          <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+            당신만의 여행 플레이리스트를<br />
+            만들기 위해 몇 가지 질문을 드릴게요.
+          </p>
+        </div>
       </motion.div>
 
       <div className="flex-1 overflow-y-auto px-6 py-6 pb-32">
@@ -72,10 +77,10 @@ export default function Onboarding() {
         >
           {/* Name */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">1. 이름</label>
+            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">이름(닉네임)</label>
             <input
               type="text"
-              placeholder="이름을 입력해주세요"
+              placeholder="예: 여행광"
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none transition-all dark:text-white"
@@ -84,11 +89,11 @@ export default function Onboarding() {
 
           {/* Info (Age / Gender) */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">2. 내 정보 (나이, 성별)</label>
+            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">내정보</label>
             <div className="flex gap-3">
               <input
                 type="number"
-                placeholder="나이 (예: 25)"
+                placeholder="나이"
                 value={age}
                 onChange={(e) => setAge(e.target.value)}
                 className="w-1/2 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none transition-all dark:text-white"
@@ -114,8 +119,7 @@ export default function Onboarding() {
 
           {/* Tags */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">3. 나의 여행 취향</label>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">원하는 만큼 해시태그를 선택해주세요.</p>
+            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">나의 여행 취향 (다중 선택)</label>
             <div className="flex flex-wrap gap-2.5">
               {TAGS.map((tag) => {
                 const isSelected = selectedTags.includes(tag);
@@ -138,7 +142,7 @@ export default function Onboarding() {
 
           {/* Frequency */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">4. 여행의 빈도는 어떻게 되나요?</label>
+            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">평소 여행 빈도는 어떻게 되나요?</label>
             <div className="flex flex-col gap-2.5">
               {FREQUENCIES.map((freq) => (
                 <button

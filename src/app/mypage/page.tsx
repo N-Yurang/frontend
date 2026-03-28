@@ -45,7 +45,7 @@ export default function MyPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-[#fdfbfb] dark:bg-gray-950 pb-20 transition-colors duration-300">
-      <div className="pt-12 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 border-b border-gray-50 dark:border-gray-800 flex items-center px-5">
+      <div className="pt-6 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 border-b border-gray-50 dark:border-gray-800 flex items-center px-5">
         <div className="flex-1" />
         <h1 className="text-[17px] font-bold text-center text-gray-900 dark:text-gray-100">내 정보</h1>
         <div className="flex-1 flex justify-end">

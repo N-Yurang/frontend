@@ -72,7 +72,7 @@ export default function TripAIChat() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-64px)] bg-white dark:bg-gray-950 relative transition-colors duration-300">
-      <div className="pt-12 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 transition-colors duration-300">
+      <div className="pt-6 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 transition-colors duration-300">
         <h1 className="text-[17px] font-bold text-center text-gray-900 dark:text-gray-100 transition-colors">AI 챗봇 상담</h1>
       </div>
 

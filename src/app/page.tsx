@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { PlayCircle } from "lucide-react";
+import { PlayCircle, Play } from "lucide-react";
 
 export default function Splash() {
   const router = useRouter();
@@ -16,22 +16,23 @@ export default function Splash() {
   }, [router]);
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-br from-brand-red to-brand-orange">
+    <div className="flex h-screen flex-col items-center justify-center bg-gradient-to-br from-[#ff6b8b] to-[#ff8e73]">
       <motion.div
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="flex flex-col items-center"
       >
-        <div className="flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-xl mb-6 text-brand-red">
+        <div className="flex items-center justify-center w-24 h-24 bg-white rounded-3xl shadow-xl mb-6 text-[#ff6b8b]">
           <PlayCircle size={48} strokeWidth={1.5} />
         </div>
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.8 }}
-          className="text-white text-4xl font-extrabold tracking-tight mb-3"
+          className="flex items-center text-white text-4xl font-extrabold tracking-widest mb-3"
         >
+          <Play fill="currentColor" strokeWidth={0} className="w-8 h-8 mr-3 -ml-2" />
           TRIPLY
         </motion.h1>
         <motion.p

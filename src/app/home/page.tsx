@@ -60,7 +60,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 pb-20 transition-colors duration-300">
       {/* Header */}
-      <header className="px-5 pt-12 pb-2 bg-white dark:bg-gray-950 sticky top-0 z-10 transition-colors duration-300">
+      <header className="px-5 pt-6 pb-2 bg-white dark:bg-gray-950 sticky top-0 z-10 transition-colors duration-300">
         <div className="flex justify-center items-center mb-4">
           <h1 className="text-xl font-black text-brand-red tracking-widest">
             TRIPLY
