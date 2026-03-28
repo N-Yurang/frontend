@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft } from 'lucide-react';
 
 interface Message {
   id: string;
@@ -11,7 +12,13 @@ interface Message {
 
 export default function TripAIChat() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "init",
+      role: "ai",
+      content: "안녕하세요! TRIPLY AI 플레이리스터입니다❤️\n\n여러분의 여행을 하나의 특별한 트랙 리스트로 멋지게 기획해 드릴게요. 어떤 분위기의 여행을 꿈꾸고 계신가요? 🎶",
+    },
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -26,24 +33,27 @@ export default function TripAIChat() {
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
 
-    // 1. 사용자 메시지 추가
     const userMsg: Message = {
       id: Date.now().toString(),
       role: "user",
       content: input,
     };
     setMessages((prev) => [...prev, userMsg]);
-    const currentInput = input; // 입력값 백업
+    const currentInput = input;
     setInput("");
     setIsLoading(true);
 
-    // 2. 파이썬 AI 서버 연동
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/recommend", {
+      // 💡 주소를 127.0.0.1에서 localhost로 변경하여 연결 안정성을 높였습니다.
+      const response = await fetch("http://localhost:8000/api/recommend", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_message: currentInput }),
       });
+
+      if (!response.ok) {
+        throw new Error("서버 응답 에러");
+      }
 
       const data = await response.json();
 
@@ -62,7 +72,7 @@ export default function TripAIChat() {
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        content: "죄송해요, AI 서버와 연결이 끊겼어요. 파이썬 터미널을 확인해 주세요!",
+        content: "죄송해요, AI 플레이리스터 서버와 잠시 연결이 끊겼어요. 파이썬 터미널에서 서버가 켜져 있는지 확인해 주세요! 🎶",
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -71,58 +81,114 @@ export default function TripAIChat() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-64px)] bg-white dark:bg-gray-950 relative transition-colors duration-300">
-      <div className="pt-6 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 transition-colors duration-300">
-        <h1 className="text-[17px] font-bold text-center text-gray-900 dark:text-gray-100 transition-colors">AI 챗봇 상담</h1>
+    <div className="flex flex-col h-[calc(100vh-64px)] bg-white dark:bg-gray-950 relative transition-colors duration-500 overflow-hidden">
+      {/* Wave Background Decorative Elements */}
+      <div className="absolute top-20 right-[-10%] w-64 h-64 bg-brand-red/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-40 left-[-10%] w-80 h-80 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Header */}
+      <div className="pt-4 pb-4 px-5 bg-white dark:bg-gray-950 sticky top-0 z-10 border-b border-gray-50 dark:border-gray-900 flex items-center justify-between transition-colors">
+        <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <ChevronLeft size={24} />
+        </button>
+        <h1 className="text-[17px] font-black text-gray-900 dark:text-gray-100 transition-colors flex items-center gap-2">
+          <Music4 size={20} className="text-brand-red" />
+          <span>AI 플레이리스터</span>
+        </h1>
+        <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+          <Info size={20} />
+        </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 scrollbar-hide space-y-6">
-        {messages.map((msg) => (
-          <motion.div
-            key={msg.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
-          >
-            <div className={`shadow-sm whitespace-pre-line px-4 py-3 text-[15px] leading-relaxed transition-colors
-              ${msg.role === "user"
-                ? "bg-[#f26b60] text-white rounded-2xl rounded-tr-sm max-w-[85%]"
-                : "bg-[#f8f9fa] dark:bg-gray-800 text-gray-800 dark:text-gray-200 border border-gray-100 dark:border-gray-700 rounded-2xl rounded-tl-sm max-w-[85%]"}`}>
-              {msg.content}
-            </div>
-          </motion.div>
-        ))}
+      {/* Chat Area */}
+      <div className="flex-1 overflow-y-auto p-5 scrollbar-hide space-y-8 bg-gray-50/30 dark:bg-gray-950/20 backdrop-blur-sm">
+        <AnimatePresence initial={false}>
+          {messages.map((msg, idx) => (
+            <motion.div
+              key={msg.id}
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className={`flex flex-col ${msg.role === "user" ? "items-end" : "items-start"}`}
+            >
+              {msg.role === 'ai' && idx > 0 && (
+                <div className="flex items-center gap-1.5 mb-2 ml-1">
+                  <div className="w-5 h-5 bg-brand-red/10 rounded-full flex items-center justify-center">
+                    <Headphones size={12} className="text-brand-red" />
+                  </div>
+                  <span className="text-[10px] font-black text-brand-red tracking-widest uppercase">CURATED TRACK</span>
+                </div>
+              )}
+
+              <div className={`relative px-5 py-3.5 text-[15px] leading-relaxed transition-all shadow-lg shadow-gray-200/50 dark:shadow-none
+                ${msg.role === "user"
+                  ? "bg-brand-red text-white rounded-[24px] rounded-tr-none max-w-[85%]"
+                  : "bg-white/80 dark:bg-gray-800/80 text-gray-800 dark:text-gray-100 backdrop-blur-md border border-white/50 dark:border-gray-700/50 rounded-[24px] rounded-tl-none max-w-[85%]"}`}>
+                {msg.content}
+
+                {msg.role === 'ai' && (
+                  <div className="absolute -bottom-6 left-0 flex items-center gap-1 opacity-40">
+                    <Volume2 size={12} />
+                    <span className="text-[9px] font-bold">PLAYLISTER RECOMIND</span>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
         {isLoading && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-start">
-            <div className="bg-[#f8f9fa] dark:bg-gray-800 border border-gray-100 dark:border-gray-700 px-5 py-4 rounded-2xl rounded-tl-sm flex gap-1 transition-colors">
-              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]"></span>
-              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]"></span>
-              <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></span>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start pt-2">
+            <div className="flex items-center gap-2 mb-2 ml-1">
+              <span className="text-[9px] font-bold text-gray-400 animate-pulse uppercase tracking-wider">PLAYLISTER IS ANALYZING...</span>
+            </div>
+            <div className="bg-white/50 dark:bg-gray-800/50 border border-white/50 dark:border-gray-700/50 px-6 py-4 rounded-[24px] rounded-tl-none shadow-sm flex items-center gap-1.5 backdrop-blur-md">
+              {[0.1, 0.2, 0.3, 0.4].map((delay, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ height: [8, 16, 8] }}
+                  transition={{ repeat: Infinity, duration: 0.6, delay }}
+                  className="w-1 bg-brand-red rounded-full"
+                />
+              ))}
             </div>
           </motion.div>
         )}
-        <div ref={messagesEndRef} />
+        <div ref={messagesEndRef} className="h-4" />
       </div>
 
-      <div className="p-4 bg-white dark:bg-gray-950 transition-colors duration-300">
-        <div className="relative flex items-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl px-4 py-2 shadow-sm focus-within:border-gray-400 dark:focus-within:border-gray-600 transition-colors duration-300">
+      {/* Input Overlay / Controller Style */}
+      <div className="px-5 py-4 pb-8 bg-white dark:bg-gray-950 transition-colors border-t border-gray-50 dark:border-gray-900">
+        <div className="relative flex items-center min-h-[58px] bg-gray-100/80 dark:bg-gray-900/80 backdrop-blur-md border border-transparent focus-within:border-brand-red/30 rounded-[28px] px-4 py-2 shadow-inner focus-within:bg-white dark:focus-within:bg-gray-900 transition-all group">
+          <button className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-gray-400 hover:text-brand-red transition-colors">
+            <Plus size={22} strokeWidth={2.5} />
+          </button>
+
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="메시지를 입력하세요..."
-            className="w-full text-[15px] outline-none bg-transparent placeholder-gray-400 dark:text-white"
+            placeholder="플레이리스터에게 메시지 보내기..."
+            className="flex-1 text-[15px] outline-none bg-transparent placeholder-gray-400 dark:text-white px-3 font-medium"
             disabled={isLoading}
           />
-          <button
-            onClick={handleSend}
-            disabled={!input.trim() || isLoading}
-            className="flex-shrink-0 px-4 h-10 flex items-center justify-center bg-[#2b2b2b] text-white rounded-xl font-medium text-[14px] disabled:bg-gray-200 disabled:text-gray-400 transition-colors ml-2"
-          >
-            전송
-          </button>
+
+          <div className="flex items-center gap-1.5">
+            <button className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-brand-red transition-all active:scale-90">
+              <Mic size={22} strokeWidth={2.5} />
+            </button>
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isLoading}
+              className={`w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95
+                ${input.trim()
+                  ? "bg-brand-red text-white shadow-lg shadow-brand-red/20"
+                  : "bg-gray-200 dark:bg-gray-800 text-gray-400"}`}
+            >
+              <Send size={18} fill={input.trim() ? "currentColor" : "none"} strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
       </div>
     </div>

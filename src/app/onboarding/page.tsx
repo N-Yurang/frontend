@@ -52,13 +52,13 @@ export default function Onboarding() {
   return (
     <div className="flex min-h-screen flex-col bg-white dark:bg-gray-950 transition-colors duration-300">
       <motion.div
-        className="px-6 pt-6 pb-4 bg-white/80 dark:bg-gray-950/80 sticky top-0 z-10 border-b border-gray-100/50 dark:border-gray-800 backdrop-blur-md transition-colors"
+        className="px-6 pt-10 pb-4 bg-white/80 dark:bg-gray-950/80 sticky top-0 z-10 border-b border-gray-100/50 dark:border-gray-800 backdrop-blur-md transition-colors"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
         <div className="text-center mb-2">
-          <h1 className="text-3xl font-extrabold text-[#ff6b8b] mb-3">
+          <h1 className="text-3xl font-extrabold text-[#f43f5e] mb-3">
             반가워요!
           </h1>
           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -119,7 +119,10 @@ export default function Onboarding() {
 
           {/* Tags */}
           <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">나의 여행 취향 (다중 선택)</label>
+            <div>
+              <label className="block text-base font-bold text-gray-900 dark:text-gray-100">나의 여행 취향</label>
+              <p className="text-[13px] text-gray-400 dark:text-gray-500 mt-1 font-medium">원하는 만큼 해시태그를 선택해주세요.</p>
+            </div>
             <div className="flex flex-wrap gap-2.5">
               {TAGS.map((tag) => {
                 const isSelected = selectedTags.includes(tag);
@@ -129,8 +132,8 @@ export default function Onboarding() {
                     type="button"
                     onClick={() => toggleTag(tag)}
                     className={`rounded-full px-4 py-2 text-sm font-medium transition-colors border ${isSelected
-                        ? "bg-brand-red text-white border-brand-red dark:border-red-500"
-                        : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      ? "bg-brand-red text-white border-brand-red dark:border-red-500"
+                      : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
                       }`}
                   >
                     #{tag}
@@ -150,8 +153,8 @@ export default function Onboarding() {
                   type="button"
                   onClick={() => setFrequency(freq)}
                   className={`flex items-center justify-between w-full px-4 py-3.5 border rounded-xl text-sm font-medium transition-all ${frequency === freq
-                      ? "border-brand-red bg-red-50/50 dark:bg-red-900/20 text-brand-red dark:text-red-400"
-                      : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                    ? "border-brand-red bg-red-50/50 dark:bg-red-900/20 text-brand-red dark:text-red-400"
+                    : "border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                     }`}
                 >
                   {freq}

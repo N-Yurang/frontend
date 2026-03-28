@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useEffect as ReactUseEffect } from "react";
-import { User, Edit2, Settings } from "lucide-react";
+import { useState, useEffect } from "react";
+import { User, Settings, CheckCircle2, Sparkles, Heart, Library, Monitor, Moon, Sun, ChevronRight, LogOut, Edit2 } from "lucide-react";
 import { useTheme } from "next-themes";
+import { motion, AnimatePresence } from "framer-motion";
 
 const TAGS = [
   "자연친화", "휴식", "가족여행", "혼자", "익스트림", "커플",
@@ -44,135 +45,242 @@ export default function MyPage() {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#fdfbfb] dark:bg-gray-950 pb-20 transition-colors duration-300">
-      <div className="pt-6 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 border-b border-gray-50 dark:border-gray-800 flex items-center px-5">
-        <div className="flex-1" />
-        <h1 className="text-[17px] font-bold text-center text-gray-900 dark:text-gray-100">내 정보</h1>
-        <div className="flex-1 flex justify-end">
-          <button onClick={() => setIsThemeOpen(true)} className="hover:scale-110 transition-transform text-gray-800 dark:text-gray-200">
-            <Settings size={26} strokeWidth={2.5} />
-          </button>
-        </div>
+    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 pb-20 transition-colors duration-500">
+      {/* Header */}
+      <div className="pt-4 pb-4 px-5 bg-white dark:bg-gray-950 sticky top-0 z-10 border-b border-gray-50 dark:border-gray-900 flex items-center justify-between transition-colors">
+        <div className="w-8" /> {/* Spacer */}
+        <h1 className="text-[17px] font-black text-gray-900 dark:text-gray-100 uppercase tracking-widest transition-colors">MY PROFILE</h1>
+        <button onClick={() => setIsThemeOpen(true)} className="w-8 flex justify-end text-gray-400 hover:text-brand-red transition-colors">
+          <Settings size={22} />
+        </button>
       </div>
 
-      <div className="px-5 mt-6">
-        {/* Profile Card */}
-        <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 flex items-center justify-between mb-8 transition-colors">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-[#f0f4f8] dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-400 transition-colors">
-              <User size={28} fill="currentColor" />
+      <div className="flex-1 overflow-y-auto scrollbar-hide px-5">
+        {/* Profile Section (Artist Info) */}
+        <section className="pt-8 pb-10 flex flex-col items-center">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="relative mb-5"
+          >
+            <div className="w-28 h-28 rounded-full border-4 border-brand-red/10 p-1 bg-gradient-to-tr from-brand-red to-teal-400 shadow-xl shadow-brand-red/10">
+              <div className="w-full h-full bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-gray-300 overflow-hidden">
+                <User size={56} fill="currentColor" opacity={0.2} />
+              </div>
             </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-1 transition-colors">{userName}님</h2>
-              <p className="text-xs text-gray-400 mt-0.5 font-medium">ID: 202210127</p>
+            <div className="absolute bottom-1 right-1 bg-brand-red text-white p-1.5 rounded-full border-2 border-white dark:border-gray-950 shadow-lg">
+              <Edit2 size={12} strokeWidth={3} />
+            </div>
+          </motion.div>
+
+          <div className="text-center">
+            <h2 className="text-2xl font-black text-gray-900 dark:text-white flex items-center justify-center gap-1.5 transition-colors">
+              {userName}
+              <CheckCircle2 size={18} className="text-brand-red fill-current/10" />
+            </h2>
+            <p className="text-xs font-black text-gray-400 mt-1 uppercase tracking-widest">VERIFIED TRAVELER</p>
+          </div>
+
+          <div className="mt-6 flex gap-8">
+            <div className="text-center">
+              <span className="block text-lg font-black text-gray-900 dark:text-white leading-none transition-colors">12</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Saves</span>
+            </div>
+            <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
+            <div className="text-center">
+              <span className="block text-lg font-black text-gray-900 dark:text-white leading-none transition-colors">3</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Playlists</span>
+            </div>
+            <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
+            <div className="text-center">
+              <span className="block text-lg font-black text-gray-900 dark:text-white leading-none transition-colors">28</span>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Spots</span>
             </div>
           </div>
-          <button className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors hover:bg-gray-200 dark:hover:bg-gray-700">
-            수정
-          </button>
-        </div>
+        </section>
 
-        {/* Travel Preferences */}
-        <div className="mb-10">
-          <h3 className="flex items-center text-base font-bold text-gray-900 dark:text-gray-100 mb-4 gap-1.5 transition-colors">
-            <span>✨</span> 나의 여행 취향
-          </h3>
-          <div className="flex flex-wrap gap-2.5">
-            {tags.map((tag) => (
-              <span key={tag} className="border border-brand-red text-brand-red dark:border-red-500/50 dark:text-red-400 text-sm px-3.5 py-1.5 rounded-full font-medium shadow-sm transition-colors">
-                #{tag}
-              </span>
-            ))}
+        {/* Travel Preferences (Tags) */}
+        <section className="mb-10">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="flex items-center text-sm font-black text-gray-900 dark:text-gray-100 gap-1.5 transition-colors uppercase tracking-widest">
+              <Sparkles size={16} className="text-brand-red" />
+              <span>Travel Tags</span>
+            </h3>
             <button 
               onClick={() => setIsTagsModalOpen(true)}
-              className="border border-dashed border-gray-300 dark:border-gray-700 text-gray-500 dark:text-gray-400 text-sm px-3.5 py-1.5 rounded-full font-medium transition-colors hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-1"
+              className="text-[11px] font-black text-brand-red hover:underline"
             >
-              + 추가
+              EDIT
             </button>
           </div>
-        </div>
-
-        {/* Travel Records */}
-        <div>
-          <h3 className="flex items-center text-base font-bold text-gray-900 dark:text-gray-100 mb-4 gap-1.5 transition-colors">
-            <span>📁</span> 나의 여행 기록
-          </h3>
-          <div className="flex gap-4">
-            <div className="flex-1 bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md dark:hover:bg-gray-800 transition-all">
-              <span className="text-3xl">❤️</span>
-              <div className="text-center">
-                <span className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-1 transition-colors">찜한 여행지</span>
-                <span className="block text-[11px] text-gray-500 dark:text-gray-400 font-medium transition-colors">12개 장소</span>
-              </div>
-            </div>
-            <div className="flex-1 bg-white dark:bg-gray-900 p-6 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-800 flex flex-col items-center justify-center gap-3 cursor-pointer hover:shadow-md dark:hover:bg-gray-800 transition-all">
-              <span className="text-3xl">🗓️</span>
-              <div className="text-center">
-                <span className="block text-sm font-bold text-gray-900 dark:text-gray-100 mb-1 transition-colors">저장된 코스</span>
-                <span className="block text-[11px] text-gray-500 dark:text-gray-400 font-medium transition-colors">3개 일정</span>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <motion.span 
+                key={tag} 
+                whileHover={{ scale: 1.05 }}
+                className="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 text-xs px-4 py-2 rounded-xl font-bold transition-colors border border-transparent hover:border-brand-red/20"
+              >
+                #{tag}
+              </motion.span>
+            ))}
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div className="mt-auto px-5 pt-12">
-        <a href="/" className="block text-center w-full py-3.5 text-sm font-bold text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors bg-gray-50 dark:bg-gray-900 rounded-2xl">
-          로그아웃
-        </a>
+        {/* My Playlists (Records) */}
+        <section className="mb-12">
+          <h3 className="flex items-center text-sm font-black text-gray-900 dark:text-gray-100 mb-5 gap-1.5 transition-colors uppercase tracking-widest">
+            <Library size={16} className="text-teal-500" />
+            <span>My Playlists</span>
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="group cursor-pointer"
+            >
+              <div className="aspect-square bg-gradient-to-br from-brand-red/80 to-red-600 rounded-3xl mb-3 flex items-center justify-center shadow-lg shadow-brand-red/20 group-hover:shadow-xl transition-all relative overflow-hidden">
+                <div className="absolute inset-0 bg-black/10 transition-opacity opacity-0 group-hover:opacity-100" />
+                <Heart size={42} fill="white" className="text-white drop-shadow-lg" />
+              </div>
+              <h4 className="font-bold text-[14px] text-gray-900 dark:text-gray-100 transition-colors px-1">찜한 여행지</h4>
+              <p className="text-[11px] text-gray-400 font-medium px-1 mt-0.5">12 spots saved</p>
+            </motion.div>
+            
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="group cursor-pointer"
+            >
+              <div className="aspect-square bg-gradient-to-br from-teal-500 to-teal-700 rounded-3xl mb-3 flex items-center justify-center shadow-lg shadow-teal-500/20 group-hover:shadow-xl transition-all relative overflow-hidden">
+                <div className="absolute inset-0 bg-black/10 transition-opacity opacity-0 group-hover:opacity-100" />
+                <Library size={42} fill="white" className="text-white drop-shadow-lg" />
+              </div>
+              <h4 className="font-bold text-[14px] text-gray-900 dark:text-gray-100 transition-colors px-1">저장된 코스</h4>
+              <p className="text-[11px] text-gray-400 font-medium px-1 mt-0.5">3 itineraries</p>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Menu Items */}
+        <section className="space-y-1">
+          <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-2xl transition-colors group">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center group-hover:bg-white dark:group-hover:bg-gray-800 transition-colors">
+                <Monitor size={20} className="text-gray-500" />
+              </div>
+              <span className="text-sm font-bold text-gray-800 dark:text-gray-200">System Preferences</span>
+            </div>
+            <ChevronRight size={18} className="text-gray-300" />
+          </button>
+          
+          <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-2xl transition-colors group text-red-500">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-red-50 dark:bg-red-500/10 rounded-xl flex items-center justify-center transition-colors">
+                <LogOut size={20} />
+              </div>
+              <span className="text-sm font-bold">Sign Out</span>
+            </div>
+            <ChevronRight size={18} className="text-red-200" />
+          </button>
+        </section>
       </div>
 
       {/* Theme Settings Modal */}
-      {isThemeOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setIsThemeOpen(false)}>
-          <div className="bg-white dark:bg-gray-900 w-[80%] max-w-[320px] rounded-2xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">테마 설정</h2>
-            <div className="flex flex-col gap-3">
-              <button onClick={() => { setTheme('light'); setIsThemeOpen(false); }} className={`py-3 px-4 rounded-xl text-left font-medium transition-colors ${theme === 'light' ? 'bg-brand-red text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
-                라이트 모드 ☀️
-              </button>
-              <button onClick={() => { setTheme('dark'); setIsThemeOpen(false); }} className={`py-3 px-4 rounded-xl text-left font-medium transition-colors ${theme === 'dark' ? 'bg-brand-red text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
-                다크 모드 🌙
-              </button>
-              <button onClick={() => { setTheme('system'); setIsThemeOpen(false); }} className={`py-3 px-4 rounded-xl text-left font-medium transition-colors ${theme === 'system' ? 'bg-brand-red text-white' : 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}>
-                시스템 설정 💻
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {isThemeOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md px-5" 
+            onClick={() => setIsThemeOpen(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-gray-900 w-full max-w-[340px] rounded-[32px] p-8 shadow-2xl overflow-hidden relative" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-red to-teal-400" />
+              
+              <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-wider flex items-center gap-2">
+                <Monitor size={22} className="text-brand-red" />
+                <span>Theme Settings</span>
+              </h2>
+
+              <div className="grid grid-cols-1 gap-3">
+                {[
+                  { id: 'light', label: 'Light Mode', icon: Sun },
+                  { id: 'dark', label: 'Dark Mode', icon: Moon },
+                  { id: 'system', label: 'System Default', icon: Monitor }
+                ].map((item) => (
+                  <button 
+                    key={item.id}
+                    onClick={() => { setTheme(item.id); setIsThemeOpen(false); }} 
+                    className={`flex items-center justify-between py-4 px-5 rounded-2xl font-bold transition-all
+                      ${theme === item.id 
+                        ? 'bg-brand-red text-white shadow-lg shadow-brand-red/20' 
+                        : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <item.icon size={20} />
+                      <span>{item.label}</span>
+                    </div>
+                    {theme === item.id && <CheckCircle2 size={18} className="fill-white/20" />}
+                  </button>
+                ))}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tags Settings Modal */}
-      {isTagsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setIsTagsModalOpen(false)}>
-          <div className="bg-white dark:bg-gray-900 w-[90%] max-w-[360px] rounded-2xl p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold text-gray-900 dark:text-white">여행 취향 수정</h2>
-              <button onClick={() => setIsTagsModalOpen(false)} className="text-sm font-bold text-brand-red">완료</button>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">원하는 해시태그를 눌러 선택/해제하세요.</p>
-            <div className="flex flex-wrap gap-2.5 max-h-[40vh] overflow-y-auto pb-2 scrollbar-hide">
-              {TAGS.map((tag) => {
-                const isSelected = tags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => toggleTag(tag)}
-                    className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors border ${
-                      isSelected
-                        ? "bg-brand-red text-white border-brand-red dark:border-red-500"
-                        : "bg-white dark:bg-gray-900 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800"
-                    }`}
-                  >
-                    #{tag}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+      <AnimatePresence>
+        {isTagsModalOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md px-5" 
+            onClick={() => setIsTagsModalOpen(false)}
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="bg-white dark:bg-gray-900 w-full max-w-[380px] rounded-[32px] p-8 shadow-2xl overflow-hidden relative" 
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-400 to-brand-red" />
+              
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider">Edit Tags</h2>
+                <button onClick={() => setIsTagsModalOpen(false)} className="bg-brand-red text-white px-4 py-1.5 rounded-full text-xs font-black tracking-widest active:scale-95 transition-transform">DONE</button>
+              </div>
+
+              <div className="flex flex-wrap gap-2.5 max-h-[45vh] overflow-y-auto pb-4 pr-1 scrollbar-hide">
+                {TAGS.map((tag) => {
+                  const isSelected = tags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`rounded-xl px-4 py-2.5 text-xs font-black transition-all border-2
+                        ${isSelected
+                          ? "bg-brand-red text-white border-brand-red shadow-lg shadow-brand-red/10"
+                          : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:border-brand-red/30"
+                      }`}
+                    >
+                      #{tag}
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
