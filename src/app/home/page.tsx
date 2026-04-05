@@ -50,11 +50,51 @@ export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
+  const [festivals, setFestivals] = useState<any[]>(FESTIVALS);
+  const [trendingMedia, setTrendingMedia] = useState<any[]>(TRENDING_MEDIA);
+  const [hiddenDestinations, setHiddenDestinations] = useState<any[]>(HIDDEN_DESTINATIONS);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setPlaceholderIndex((prev) => (prev + 1) % SEARCH_PLACEHOLDERS.length);
     }, 3000);
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    // 3~6월 축제 데이터 가져오기
+    fetch('http://localhost:5001/api/festivals')
+      .then(res => res.json())
+      .then(json => {
+        const data = json.data?.festivals || json;
+        if (Array.isArray(data) && data.length > 0) setFestivals(data);
+      })
+      .catch(err => console.error("Failed to fetch festivals:", err));
+
+    // 트렌드 추천 장소 가져오기
+    fetch('http://localhost:5001/api/places/trends')
+      .then(res => res.json())
+      .then(json => {
+        const data = json.data?.places || json;
+        if (Array.isArray(data) && data.length > 0) setTrendingMedia(data);
+      })
+      .catch(err => console.error("Failed to fetch trending places:", err));
+
+    // 숨은 여행지 장소 가져오기
+    fetch('http://localhost:5001/api/places/hidden')
+      .then(res => {
+        if (!res.ok) {
+          console.warn("Hidden API not ok!");
+          return null;
+        }
+        return res.json();
+      })
+      .then(json => {
+        if (!json) return;
+        const data = json.data?.places || json;
+        if (Array.isArray(data) && data.length > 0) setHiddenDestinations(data);
+      })
+      .catch(err => console.error("Failed to fetch hidden places:", err));
   }, []);
 
   return (
@@ -120,45 +160,61 @@ export default function Home() {
             </h2>
             <button className="text-xs font-bold text-gray-400 hover:text-brand-red">SEE ALL</button>
           </div>
-          
+
           <div className="space-y-6">
-            {TRENDING_MEDIA.map((item, idx) => (
-              <motion.div 
-                key={item.id} 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
-              >
-                <Image
-                  src={item.image}
-                  alt="Trend"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-1000"
-                  sizes="(max-width: 480px) 100vw, 480px"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+            {trendingMedia.map((item: any, idx: number) => {
+              const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
+              const title = item.name || item.title;
+              let badge = item.badge || "TRENDING";
+              if (item.tags) {
+                try {
+                  const tagsArray = typeof item.tags === 'string' ? JSON.parse(item.tags) : item.tags;
+                  if (Array.isArray(tagsArray) && tagsArray.length > 0) {
+                    badge = tagsArray[0];
+                  }
+                } catch (e) {
+                  // Ignore parse error
+                }
+              }
 
-                {/* Play Button Overlay */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
-                  <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                    <Play size={32} className="text-white fill-white ml-1" />
-                  </div>
-                </div>
+              return (
+                <motion.div
+                  key={item.trend_id || item.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
+                >
+                  <Image
+                    src={imageUrl}
+                    alt={title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-1000"
+                    sizes="(max-width: 480px) 100vw, 480px"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
-                <div className="absolute bottom-6 left-6 right-6 text-white">
-                  <div className="flex flex-col gap-2">
-                    <span className="inline-block w-fit bg-brand-red px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
-                      {item.badge}
-                    </span>
-                    <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
-                      {item.title}
-                    </h3>
+                  {/* Play Button Overlay */}
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                      <Play size={32} className="text-white fill-white ml-1" />
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+
+                  <div className="absolute bottom-6 left-6 right-6 text-white">
+                    <div className="flex flex-col gap-2">
+                      <span className="inline-block w-fit bg-brand-red px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
+                        {badge}
+                      </span>
+                      <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
+                        {title}
+                      </h3>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
 
@@ -171,41 +227,47 @@ export default function Home() {
             </h2>
             <p className="text-xs text-gray-500 font-medium">아직 많이 알려지지 않은 보석 같은 장소들</p>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4 px-5">
-            {HIDDEN_DESTINATIONS.map((item, idx) => (
-              <motion.div 
-                key={item.id} 
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="group cursor-pointer"
-              >
-                <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    sizes="(max-width: 480px) 50vw, 25vw"
-                  />
-                  {/* Small Play Indicator */}
-                  <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Play size={14} className="text-white fill-white ml-0.5" />
+            {hiddenDestinations.map((item: any, idx: number) => {
+              const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
+              const title = item.name || item.title;
+              const location = item.location || "위치 알 수 없음";
+
+              return (
+                <motion.div
+                  key={item.place_id || item.id}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="group cursor-pointer"
+                >
+                  <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
+                    <Image
+                      src={imageUrl}
+                      alt={title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
+                      sizes="(max-width: 480px) 50vw, 25vw"
+                    />
+                    {/* Small Play Indicator */}
+                    <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Play size={14} className="text-white fill-white ml-0.5" />
+                    </div>
                   </div>
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] px-1 truncate transition-colors">{item.title}</h3>
-                <div className="flex items-center justify-between px-1 mt-1">
-                  <p className="text-[11px] text-gray-400 flex items-center gap-0.5">
-                    <MapPin className="w-3 h-3 text-brand-red" /> {item.location}
-                  </p>
-                  <button className="text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                    <MoreHorizontal size={14} />
-                  </button>
-                </div>
-              </motion.div>
-            ))}
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] px-1 truncate transition-colors">{title}</h3>
+                  <div className="flex items-center justify-between px-1 mt-1">
+                    <p className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                      <MapPin className="w-3 h-3 text-brand-red" /> {location}
+                    </p>
+                    <button className="text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                      <MoreHorizontal size={14} />
+                    </button>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
 
@@ -221,33 +283,48 @@ export default function Home() {
             </div>
             <button className="text-xs font-bold text-brand-red">03 / 2024</button>
           </div>
-          
+
           <div className="flex overflow-x-auto gap-5 pb-4 -mx-5 px-5 scrollbar-hide">
-            {FESTIVALS.map((item, idx) => (
-              <motion.div 
-                key={item.id} 
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
-                className="min-w-[160px] flex-shrink-0 group cursor-pointer"
-              >
-                <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
-                  <Image
-                    src={item.image}
-                    alt={item.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                    sizes="(max-width: 480px) 50vw, 33vw"
-                  />
-                  <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-lg text-[10px] font-black text-gray-900 dark:text-white transition-colors">
-                    D-DAY
+            {festivals.map((item: any, idx: number) => {
+              const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
+              const title = item.name || item.title;
+
+              const formatDate = (dateStr: string) => {
+                if (!dateStr) return "";
+                const d = new Date(dateStr);
+                return isNaN(d.getTime()) ? dateStr : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+              };
+
+              const dateStr = item.start_date
+                ? (item.end_date ? `${formatDate(item.start_date)}~${formatDate(item.end_date)}` : formatDate(item.start_date))
+                : item.date;
+
+              return (
+                <motion.div
+                  key={item.festival_id || item.id}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: idx * 0.1 }}
+                  className="min-w-[160px] flex-shrink-0 group cursor-pointer"
+                >
+                  <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
+                    <Image
+                      src={imageUrl}
+                      alt={title}
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-700"
+                      sizes="(max-width: 480px) 50vw, 33vw"
+                    />
+                    <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-lg text-[10px] font-black text-gray-900 dark:text-white transition-colors">
+                      D-DAY
+                    </div>
                   </div>
-                </div>
-                <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] mb-0.5 transition-colors">{item.title}</h3>
-                <p className="text-[11px] text-gray-400 font-medium">{item.date}</p>
-              </motion.div>
-            ))}
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] mb-0.5 transition-colors">{title}</h3>
+                  <p className="text-[11px] text-gray-400 font-medium">{dateStr}</p>
+                </motion.div>
+              );
+            })}
           </div>
         </section>
       </div>
