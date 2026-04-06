@@ -122,47 +122,49 @@ export default function Home() {
                 <div key={idx} className="w-full h-64 rounded-[32px] bg-gray-200 dark:bg-gray-800 animate-pulse shadow-xl shadow-gray-200/50 dark:shadow-none" />
               ))
             ) : (
-            trendingPlaces.map((item: any, idx: number) => {
-              return (
-                <motion.div
-                  key={item.place_id}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
-                >
-                  {/* ✅ 수정 START ================================ */}
-                  {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
-                  {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
-                  <img
-                    src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
-                    alt={item.name}
-                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-                  />
-                  {/* ✅ 수정 END ================================== */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+              trendingPlaces.map((item: any, idx: number) => {
+                return (
+                  <motion.div
+                    key={item.place_id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
+                  >
+                    {/* ✅ 수정 START ================================ */}
+                    {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
+                    {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
+                    <img
+                      src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
+                      alt={item.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                    />
+                    {/* ✅ 수정 END ================================== */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
-                  {/* Play Button Overlay */}
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
-                    <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                      <Play size={32} className="text-white fill-white ml-1" />
+                    {/* Play Button Overlay */}
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
+                      <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                        <Play size={32} className="text-white fill-white ml-1" />
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="absolute bottom-6 left-6 right-6 text-white">
-                    <div className="flex flex-col gap-2">
-                      <span className="inline-block w-fit bg-brand-red px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
-                        {item.media_source}
-                      </span>
-                      <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
-                        {item.name === '별마로천문대' ? '영월' : item.name}
-                      </h3>
+                    <div className="absolute bottom-6 left-6 right-6 text-white">
+                      <div className="flex flex-col gap-2">
+                        <span className="inline-block w-fit bg-brand-red px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
+                          {item.media_source}
+                        </span>
+                        <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
+                          {item.name === '별마로천문대' ? '영월: 별마로 천문대' 
+                           : item.name === '백제문화단지' ? '부여: 백제문화단지' 
+                           : item.name}
+                        </h3>
+                      </div>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })
+                  </motion.div>
+                );
+              })
             )}
           </div>
         </section>
@@ -189,43 +191,43 @@ export default function Home() {
                 </div>
               ))
             ) : (
-            hiddenPlaces.map((item: any, idx: number) => {
-              return (
-                <motion.div
-                  key={item.place_id}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="min-w-[160px] w-[calc(50vw-28px)] max-w-[200px] flex-shrink-0 group cursor-pointer"
-                >
-                  <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
-                    {/* ✅ 수정 START ================================ */}
-                    {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
-                    {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
-                    <img
-                      src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
-                      alt={item.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    {/* ✅ 수정 END ================================== */}
-                    {/* Small Play Indicator */}
-                    <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Play size={14} className="text-white fill-white ml-0.5" />
+              hiddenPlaces.map((item: any, idx: number) => {
+                return (
+                  <motion.div
+                    key={item.place_id}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="min-w-[160px] w-[calc(50vw-28px)] max-w-[200px] flex-shrink-0 group cursor-pointer"
+                  >
+                    <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
+                      {/* ✅ 수정 START ================================ */}
+                      {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
+                      {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
+                      <img
+                        src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
+                        alt={item.name}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
+                      {/* ✅ 수정 END ================================== */}
+                      {/* Small Play Indicator */}
+                      <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Play size={14} className="text-white fill-white ml-0.5" />
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] px-1 truncate transition-colors">{item.name}</h3>
-                  <div className="flex items-center justify-between px-1 mt-1">
-                    <p className="text-[11px] text-gray-400 flex items-center gap-0.5">
-                      <MapPin className="w-3 h-3 text-brand-red" /> {item.location}
-                    </p>
-                    <button className="text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                      <MoreHorizontal size={14} />
-                    </button>
-                  </div>
-                </motion.div>
-              );
-            })
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] px-1 truncate transition-colors">{item.name}</h3>
+                    <div className="flex items-center justify-between px-1 mt-1">
+                      <p className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                        <MapPin className="w-3 h-3 text-brand-red" /> {item.location}
+                      </p>
+                      <button className="text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                        <MoreHorizontal size={14} />
+                      </button>
+                    </div>
+                  </motion.div>
+                );
+              })
             )}
           </div>
         </section>
@@ -253,47 +255,47 @@ export default function Home() {
                 </div>
               ))
             ) : (
-            festivals.map((item: any, idx: number) => {
-              const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
-              const title = item.name || item.title;
+              festivals.map((item: any, idx: number) => {
+                const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
+                const title = item.name || item.title;
 
-              const formatDate = (dateStr: string) => {
-                if (!dateStr) return "";
-                const d = new Date(dateStr);
-                return isNaN(d.getTime()) ? dateStr : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
-              };
+                const formatDate = (dateStr: string) => {
+                  if (!dateStr) return "";
+                  const d = new Date(dateStr);
+                  return isNaN(d.getTime()) ? dateStr : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+                };
 
-              const dateStr = item.start_date
-                ? (item.end_date ? `${formatDate(item.start_date)}~${formatDate(item.end_date)}` : formatDate(item.start_date))
-                : item.date;
+                const dateStr = item.start_date
+                  ? (item.end_date ? `${formatDate(item.start_date)}~${formatDate(item.end_date)}` : formatDate(item.start_date))
+                  : item.date;
 
-              return (
-                <motion.div
-                  key={item.festival_id || item.id}
-                  initial={{ opacity: 0, x: 20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: idx * 0.1 }}
-                  className="min-w-[160px] flex-shrink-0 group cursor-pointer"
-                >
-                  <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
-                    {/* ✅ 수정 START ================================ */}
-                    {/* className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
-                    <img
-                      src={imageUrl}
-                      alt={title}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                    />
-                    {/* ✅ 수정 END ================================== */}
-                    <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-lg text-[10px] font-black text-gray-900 dark:text-white transition-colors">
-                      D-DAY
+                return (
+                  <motion.div
+                    key={item.festival_id || item.id}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="min-w-[160px] flex-shrink-0 group cursor-pointer"
+                  >
+                    <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
+                      {/* ✅ 수정 START ================================ */}
+                      {/* className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
+                      <img
+                        src={imageUrl}
+                        alt={title}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                      />
+                      {/* ✅ 수정 END ================================== */}
+                      <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-lg text-[10px] font-black text-gray-900 dark:text-white transition-colors">
+                        D-DAY
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] mb-0.5 transition-colors">{title}</h3>
-                  <p className="text-[11px] text-gray-400 font-medium">{dateStr}</p>
-                </motion.div>
-              );
-            })
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] mb-0.5 transition-colors">{title}</h3>
+                    <p className="text-[11px] text-gray-400 font-medium">{dateStr}</p>
+                  </motion.div>
+                );
+              })
             )}
           </div>
         </section>
