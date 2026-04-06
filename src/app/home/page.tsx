@@ -156,9 +156,7 @@ export default function Home() {
                           {item.media_source}
                         </span>
                         <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
-                          {item.name === '별마로천문대' ? '영월: 별마로 천문대' 
-                           : item.name === '백제문화단지' ? '부여: 백제문화단지' 
-                           : item.name}
+                          {item.location}
                         </h3>
                       </div>
                     </div>
