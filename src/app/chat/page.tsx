@@ -120,7 +120,7 @@ export default function TripAIChat() {
                 </div>
               )}
 
-              <div className={`relative px-5 py-3.5 text-[15px] leading-relaxed transition-all shadow-lg shadow-gray-200/50 dark:shadow-none
+              <div className={`whitespace-pre-wrap break-words relative px-5 py-3.5 text-[15px] leading-relaxed transition-all shadow-lg shadow-gray-200/50 dark:shadow-none
                 ${msg.role === "user"
                   ? "bg-brand-red text-white rounded-[24px] rounded-tr-none max-w-[85%]"
                   : "bg-white/80 dark:bg-gray-800/80 text-gray-800 dark:text-gray-100 backdrop-blur-md border border-white/50 dark:border-gray-700/50 rounded-[24px] rounded-tl-none max-w-[85%]"}`}>

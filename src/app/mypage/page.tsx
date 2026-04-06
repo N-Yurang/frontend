@@ -30,7 +30,7 @@ export default function MyPage() {
     if (storedName) {
       setUserName(storedName);
     }
-    
+
     const storedTags = localStorage.getItem('userTags');
     if (storedTags) {
       try {
@@ -58,7 +58,7 @@ export default function MyPage() {
       <div className="flex-1 overflow-y-auto scrollbar-hide px-5">
         {/* Profile Section (Artist Info) */}
         <section className="pt-8 pb-10 flex flex-col items-center">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="relative mb-5"
@@ -106,7 +106,7 @@ export default function MyPage() {
               <Sparkles size={16} className="text-brand-red" />
               <span>Travel Tags</span>
             </h3>
-            <button 
+            <button
               onClick={() => setIsTagsModalOpen(true)}
               className="text-[11px] font-black text-brand-red hover:underline"
             >
@@ -115,8 +115,8 @@ export default function MyPage() {
           </div>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag) => (
-              <motion.span 
-                key={tag} 
+              <motion.span
+                key={tag}
                 whileHover={{ scale: 1.05 }}
                 className="bg-gray-100 dark:bg-gray-900 text-gray-700 dark:text-gray-300 text-xs px-4 py-2 rounded-xl font-bold transition-colors border border-transparent hover:border-brand-red/20"
               >
@@ -133,7 +133,7 @@ export default function MyPage() {
             <span>My Playlists</span>
           </h3>
           <div className="grid grid-cols-2 gap-4">
-            <motion.div 
+            <motion.div
               whileHover={{ y: -5 }}
               className="group cursor-pointer"
             >
@@ -144,8 +144,8 @@ export default function MyPage() {
               <h4 className="font-bold text-[14px] text-gray-900 dark:text-gray-100 transition-colors px-1">찜한 여행지</h4>
               <p className="text-[11px] text-gray-400 font-medium px-1 mt-0.5">12 spots saved</p>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               whileHover={{ y: -5 }}
               className="group cursor-pointer"
             >
@@ -170,7 +170,7 @@ export default function MyPage() {
             </div>
             <ChevronRight size={18} className="text-gray-300" />
           </button>
-          
+
           <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-2xl transition-colors group text-red-500">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-red-50 dark:bg-red-500/10 rounded-xl flex items-center justify-center transition-colors">
@@ -186,22 +186,22 @@ export default function MyPage() {
       {/* Theme Settings Modal */}
       <AnimatePresence>
         {isThemeOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md px-5" 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md px-5"
             onClick={() => setIsThemeOpen(false)}
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-gray-900 w-full max-w-[340px] rounded-[32px] p-8 shadow-2xl overflow-hidden relative" 
+              className="bg-white dark:bg-gray-900 w-full max-w-[340px] rounded-[32px] p-8 shadow-2xl overflow-hidden relative"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-brand-red to-teal-400" />
-              
+
               <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-wider flex items-center gap-2">
                 <Monitor size={22} className="text-brand-red" />
                 <span>Theme Settings</span>
@@ -213,12 +213,12 @@ export default function MyPage() {
                   { id: 'dark', label: 'Dark Mode', icon: Moon },
                   { id: 'system', label: 'System Default', icon: Monitor }
                 ].map((item) => (
-                  <button 
+                  <button
                     key={item.id}
-                    onClick={() => { setTheme(item.id); setIsThemeOpen(false); }} 
+                    onClick={() => { setTheme(item.id); setIsThemeOpen(false); }}
                     className={`flex items-center justify-between py-4 px-5 rounded-2xl font-bold transition-all
-                      ${theme === item.id 
-                        ? 'bg-brand-red text-white shadow-lg shadow-brand-red/20' 
+                      ${theme === item.id
+                        ? 'bg-brand-red text-white shadow-lg shadow-brand-red/20'
                         : 'bg-gray-50 dark:bg-gray-800 text-gray-800 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
                   >
                     <div className="flex items-center gap-3">
@@ -237,22 +237,22 @@ export default function MyPage() {
       {/* Tags Settings Modal */}
       <AnimatePresence>
         {isTagsModalOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md px-5" 
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md px-5"
             onClick={() => setIsTagsModalOpen(false)}
           >
-            <motion.div 
+            <motion.div
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
-              className="bg-white dark:bg-gray-900 w-full max-w-[380px] rounded-[32px] p-8 shadow-2xl overflow-hidden relative" 
+              className="bg-white dark:bg-gray-900 w-full max-w-[380px] rounded-[32px] p-8 shadow-2xl overflow-hidden relative"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-400 to-brand-red" />
-              
+
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-black text-gray-900 dark:text-white uppercase tracking-wider">Edit Tags</h2>
                 <button onClick={() => setIsTagsModalOpen(false)} className="bg-brand-red text-white px-4 py-1.5 rounded-full text-xs font-black tracking-widest active:scale-95 transition-transform">DONE</button>
@@ -270,7 +270,7 @@ export default function MyPage() {
                         ${isSelected
                           ? "bg-brand-red text-white border-brand-red shadow-lg shadow-brand-red/10"
                           : "bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-gray-100 dark:border-gray-700 hover:border-brand-red/30"
-                      }`}
+                        }`}
                     >
                       #{tag}
                     </button>

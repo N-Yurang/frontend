@@ -15,44 +15,17 @@ const SEARCH_PLACEHOLDERS = [
   "엔딩 크레딧이 올라가면 시작되는 당신만의 여행",
 ];
 
-const FESTIVALS = [
-  { id: 1, title: "제주 들불축제", date: "03.08-03.11", image: "https://images.unsplash.com/photo-1542281286-9e0a16bb7366?auto=format&fit=crop&q=80&w=400&h=300" },
-  { id: 2, title: "진해 군항제", date: "03.25-04.03", image: "https://images.unsplash.com/photo-1617180236048-bdabae82e2ec?auto=format&fit=crop&q=80&w=400&h=300" },
-  { id: 3, title: "에버랜드 장미축제", date: "03.15-06.11", image: "https://images.unsplash.com/photo-1554559388-755cc8bd75a9?auto=format&fit=crop&q=80&w=400&h=300" },
-  { id: 4, title: "부산 불꽃축제", date: "03.20", image: "https://images.unsplash.com/photo-1498931299472-f7a63a5a1cfa?auto=format&fit=crop&q=80&w=400&h=300" },
-  { id: 5, title: "여의도 벚꽃축제", date: "03.28-04.02", image: "https://images.unsplash.com/photo-1522069169874-c58ec4b76be5?auto=format&fit=crop&q=80&w=400&h=300" }
-];
-
-const HIDDEN_DESTINATIONS = [
-  { id: 201, title: "비밀의 숲 안돌오름", location: "제주 구좌읍", image: "https://images.unsplash.com/photo-1521742617637-268e37130dfc?auto=format&fit=crop&q=80&w=400&h=300" },
-  { id: 202, title: "수로부인 헌화공원", location: "강원 삼척", image: "https://images.unsplash.com/photo-1588614486676-e1f9a2fbde64?auto=format&fit=crop&q=80&w=400&h=300" },
-  { id: 203, title: "다랭이마을 계단식 논", location: "경남 남해", image: "https://images.unsplash.com/photo-1617180236048-bdabae82e2ec?auto=format&fit=crop&q=80&w=400&h=300" },
-  { id: 204, title: "벌교 갯벌", location: "전남 보성", image: "https://images.unsplash.com/photo-1612458428172-23c58cc440d4?auto=format&fit=crop&q=80&w=400&h=300" }
-];
-
-const TRENDING_MEDIA = [
-  {
-    id: 101,
-    badge: "MOVIE TREND",
-    title: "'왕의 남자' 촬영지!\n새롭게 뜨는 여행지 영월",
-    image: "https://images.unsplash.com/photo-1517154421773-0529f29ea451?auto=format&fit=crop&w=800&q=80"
-  },
-  {
-    id: 102,
-    badge: "VARIETY SHOW",
-    title: "힐링 예능 촬영지,\n숨은 낭만 고흥으로 떠나요",
-    image: "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80"
-  },
-];
 
 export default function Home() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [searchValue, setSearchValue] = useState("");
 
-  const [festivals, setFestivals] = useState<any[]>(FESTIVALS);
-  const [trendingMedia, setTrendingMedia] = useState<any[]>(TRENDING_MEDIA);
-  const [hiddenDestinations, setHiddenDestinations] = useState<any[]>(HIDDEN_DESTINATIONS);
+  const currentMonth = new Date().getMonth() + 1;
+  const [festivals, setFestivals] = useState([]);
+  const [trendingPlaces, setTrendingPlaces] = useState([]);
+  const [hiddenPlaces, setHiddenPlaces] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -62,40 +35,22 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    // 3~6월 축제 데이터 가져오기
-    fetch('http://localhost:5001/api/festivals')
-      .then(res => res.json())
-      .then(json => {
-        const data = json.data?.festivals || json;
-        if (Array.isArray(data) && data.length > 0) setFestivals(data);
+    setIsLoading(true);
+    Promise.all([
+      fetch(`http://localhost:5001/api/festivals?month=${currentMonth}`).then(res => res.json()),
+      fetch("http://localhost:5001/api/places/trends").then(res => res.json()),
+      fetch("http://localhost:5001/api/places/hidden").then(res => res.json())
+    ])
+      .then(([festivalsData, trendsData, hiddenData]) => {
+        if (festivalsData && festivalsData.status === "success") setFestivals(festivalsData.data.festivals);
+        if (trendsData && trendsData.status === "success") setTrendingPlaces(trendsData.data.places);
+        if (hiddenData && hiddenData.status === "success") setHiddenPlaces(hiddenData.data.places);
       })
-      .catch(err => console.error("Failed to fetch festivals:", err));
-
-    // 트렌드 추천 장소 가져오기
-    fetch('http://localhost:5001/api/places/trends')
-      .then(res => res.json())
-      .then(json => {
-        const data = json.data?.places || json;
-        if (Array.isArray(data) && data.length > 0) setTrendingMedia(data);
-      })
-      .catch(err => console.error("Failed to fetch trending places:", err));
-
-    // 숨은 여행지 장소 가져오기
-    fetch('http://localhost:5001/api/places/hidden')
-      .then(res => {
-        if (!res.ok) {
-          console.warn("Hidden API not ok!");
-          return null;
-        }
-        return res.json();
-      })
-      .then(json => {
-        if (!json) return;
-        const data = json.data?.places || json;
-        if (Array.isArray(data) && data.length > 0) setHiddenDestinations(data);
-      })
-      .catch(err => console.error("Failed to fetch hidden places:", err));
-  }, []);
+      .catch(console.error)
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [currentMonth]);
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 pb-20 transition-colors duration-300">
@@ -162,37 +117,30 @@ export default function Home() {
           </div>
 
           <div className="space-y-6">
-            {trendingMedia.map((item: any, idx: number) => {
-              const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
-              const title = item.name || item.title;
-              let badge = item.badge || "TRENDING";
-              if (item.tags) {
-                try {
-                  const tagsArray = typeof item.tags === 'string' ? JSON.parse(item.tags) : item.tags;
-                  if (Array.isArray(tagsArray) && tagsArray.length > 0) {
-                    badge = tagsArray[0];
-                  }
-                } catch (e) {
-                  // Ignore parse error
-                }
-              }
-
+            {isLoading ? (
+              [...Array(2)].map((_, idx) => (
+                <div key={idx} className="w-full h-64 rounded-[32px] bg-gray-200 dark:bg-gray-800 animate-pulse shadow-xl shadow-gray-200/50 dark:shadow-none" />
+              ))
+            ) : (
+            trendingPlaces.map((item: any, idx: number) => {
               return (
                 <motion.div
-                  key={item.trend_id || item.id}
+                  key={item.place_id}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
                   className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
                 >
-                  <Image
-                    src={imageUrl}
-                    alt={title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-1000"
-                    sizes="(max-width: 480px) 100vw, 480px"
+                  {/* ✅ 수정 START ================================ */}
+                  {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
+                  {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
+                  <img
+                    src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
+                    alt={item.name}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                   />
+                  {/* ✅ 수정 END ================================== */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
                   {/* Play Button Overlay */}
@@ -205,61 +153,71 @@ export default function Home() {
                   <div className="absolute bottom-6 left-6 right-6 text-white">
                     <div className="flex flex-col gap-2">
                       <span className="inline-block w-fit bg-brand-red px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
-                        {badge}
+                        {item.media_source}
                       </span>
                       <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
-                        {title}
+                        {item.name === '별마로천문대' ? '영월' : item.name}
                       </h3>
                     </div>
                   </div>
                 </motion.div>
               );
-            })}
+            })
+            )}
           </div>
         </section>
 
         {/* Hidden Destinations */}
         <section className="mt-12 py-10 bg-gray-50/50 dark:bg-gray-900/30 border-y border-gray-100 dark:border-gray-800 transition-colors">
-          <div className="px-5 mb-6">
-            <h2 className="flex items-center text-lg font-bold text-gray-900 dark:text-gray-100 gap-2 mb-1">
-              <Compass className="w-5 h-5 text-teal-500" />
-              <span>숨은 여행지</span>
-            </h2>
-            <p className="text-xs text-gray-500 font-medium">아직 많이 알려지지 않은 보석 같은 장소들</p>
+          <div className="flex items-center justify-between px-5 mb-6">
+            <div>
+              <h2 className="flex items-center text-lg font-bold text-gray-900 dark:text-gray-100 gap-2 mb-1">
+                <Compass className="w-5 h-5 text-teal-500" />
+                <span>숨은 여행지</span>
+              </h2>
+              <p className="text-xs text-gray-500 font-medium">아직 많이 알려지지 않은 보석 같은 장소들</p>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 px-5">
-            {hiddenDestinations.map((item: any, idx: number) => {
-              const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
-              const title = item.name || item.title;
-              const location = item.location || "위치 알 수 없음";
-
+          <div className="flex overflow-x-auto gap-5 pb-4 px-5 scrollbar-hide">
+            {isLoading ? (
+              [...Array(3)].map((_, idx) => (
+                <div key={idx} className="min-w-[160px] w-[calc(50vw-28px)] max-w-[200px] flex-shrink-0 group">
+                  <div className="h-44 w-full rounded-3xl bg-gray-200 dark:bg-gray-800 animate-pulse mb-3" />
+                  <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-2" />
+                  <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                </div>
+              ))
+            ) : (
+            hiddenPlaces.map((item: any, idx: number) => {
               return (
                 <motion.div
-                  key={item.place_id || item.id}
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
+                  key={item.place_id}
+                  initial={{ opacity: 0, x: 20 }}
+                  whileInView={{ opacity: 1, x: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: idx * 0.1 }}
-                  className="group cursor-pointer"
+                  className="min-w-[160px] w-[calc(50vw-28px)] max-w-[200px] flex-shrink-0 group cursor-pointer"
                 >
                   <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
-                    <Image
-                      src={imageUrl}
-                      alt={title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      sizes="(max-width: 480px) 50vw, 25vw"
+                    {/* ✅ 수정 START ================================ */}
+                    {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
+                    {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
+                    <img
+                      src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
+                      alt={item.name}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
+                    {/* ✅ 수정 END ================================== */}
                     {/* Small Play Indicator */}
                     <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Play size={14} className="text-white fill-white ml-0.5" />
                     </div>
                   </div>
-                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] px-1 truncate transition-colors">{title}</h3>
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] px-1 truncate transition-colors">{item.name}</h3>
                   <div className="flex items-center justify-between px-1 mt-1">
                     <p className="text-[11px] text-gray-400 flex items-center gap-0.5">
-                      <MapPin className="w-3 h-3 text-brand-red" /> {location}
+                      <MapPin className="w-3 h-3 text-brand-red" /> {item.location}
                     </p>
                     <button className="text-gray-300 hover:text-gray-900 dark:hover:text-white">
                       <MoreHorizontal size={14} />
@@ -267,7 +225,8 @@ export default function Home() {
                   </div>
                 </motion.div>
               );
-            })}
+            })
+            )}
           </div>
         </section>
 
@@ -285,7 +244,16 @@ export default function Home() {
           </div>
 
           <div className="flex overflow-x-auto gap-5 pb-4 -mx-5 px-5 scrollbar-hide">
-            {festivals.map((item: any, idx: number) => {
+            {isLoading ? (
+              [...Array(3)].map((_, idx) => (
+                <div key={idx} className="min-w-[160px] flex-shrink-0">
+                  <div className="h-40 w-full rounded-3xl bg-gray-200 dark:bg-gray-800 animate-pulse mb-3" />
+                  <div className="h-4 w-3/4 bg-gray-200 dark:bg-gray-800 rounded animate-pulse mb-1.5" />
+                  <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
+                </div>
+              ))
+            ) : (
+            festivals.map((item: any, idx: number) => {
               const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
               const title = item.name || item.title;
 
@@ -309,13 +277,14 @@ export default function Home() {
                   className="min-w-[160px] flex-shrink-0 group cursor-pointer"
                 >
                   <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
-                    <Image
+                    {/* ✅ 수정 START ================================ */}
+                    {/* className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
+                    <img
                       src={imageUrl}
                       alt={title}
-                      fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-700"
-                      sizes="(max-width: 480px) 50vw, 33vw"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                     />
+                    {/* ✅ 수정 END ================================== */}
                     <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-lg text-[10px] font-black text-gray-900 dark:text-white transition-colors">
                       D-DAY
                     </div>
@@ -324,7 +293,8 @@ export default function Home() {
                   <p className="text-[11px] text-gray-400 font-medium">{dateStr}</p>
                 </motion.div>
               );
-            })}
+            })
+            )}
           </div>
         </section>
       </div>
