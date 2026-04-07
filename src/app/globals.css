@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -52,4 +53,33 @@ body {
   /* IE and Edge */
   scrollbar-width: none;
   /* Firefox */
+}
+
+/* ==================================
+   Map (Leaflet) Override Styles
+   ================================== */
+
+.leaflet-container {
+  font-family: var(--font-sans) !important;
+  z-index: 10 !important;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 16px !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+  border: 1px solid rgba(0,0,0,0.05);
+}
+
+.dark .leaflet-popup-content-wrapper {
+  background-color: #1f2937 !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.dark .leaflet-popup-tip {
+  background-color: #1f2937 !important;
+}
+
+.leaflet-popup-content {
+  margin: 10px !important;
 }

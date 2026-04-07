@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import dynamic from "next/dynamic";
 import { 
   Play, 
   Shuffle, 
@@ -13,25 +15,46 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
+// dynamically import leaflet component with ssr: false
+const MapClient = dynamic(() => import('@/components/map/MapClient'), { 
+  ssr: false,
+  loading: () => (
+    <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-sm">
+      <div className="w-16 h-16 bg-white/80 dark:bg-gray-700/80 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
+        <MapPin size={32} className="text-brand-red animate-bounce" />
+      </div>
+      <p className="text-gray-900 dark:text-gray-100 font-bold text-[16px] mb-1">지도 불러오는 중...</p>
+    </div>
+  )
+});
+
 export default function CourseMap() {
+  const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
+
   const ITINERARY = [
     { 
       id: 1, 
       name: "성흥산성 사랑나무", 
       desc: "인생샷 명소로 유명한 탁 트인 언덕",
-      duration: "1h 30m"
+      duration: "1h 30m",
+      lat: 36.1950,
+      lng: 126.9038
     },
     { 
       id: 2, 
       name: "부여 중앙시장", 
       desc: "점심 식사 및 현지 간식 탐방",
-      duration: "1h 00m"
+      duration: "1h 00m",
+      lat: 36.2798,
+      lng: 126.9140
     },
     { 
       id: 3, 
       name: "궁남지 야경", 
       desc: "은은한 조명이 예쁜 산책로 마무~리",
-      duration: "45m"
+      duration: "45m",
+      lat: 36.2748,
+      lng: 126.9142
     },
   ];
 
@@ -56,20 +79,18 @@ export default function CourseMap() {
             animate={{ opacity: 1, scale: 1 }}
             className="aspect-square w-full max-w-[320px] mx-auto bg-gray-200 dark:bg-gray-800 rounded-3xl overflow-hidden shadow-2xl relative flex items-center justify-center transition-colors shadow-gray-200 dark:shadow-black/50"
           >
-            {/* Map Placeholder Content */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center bg-gray-100/50 dark:bg-gray-800/50 backdrop-blur-sm">
-              <div className="w-16 h-16 bg-white/80 dark:bg-gray-700/80 rounded-2xl flex items-center justify-center mb-4 shadow-sm">
-                <MapPin size={32} className="text-brand-red" />
-              </div>
-              <p className="text-gray-900 dark:text-gray-100 font-bold text-[16px] mb-1">지도 API 연동 영역</p>
-              <p className="text-gray-500 dark:text-gray-400 text-xs">부여 당일치기 테마 플레이리스트</p>
+            {/* 🗺️ Leaflet Map Component */}
+            <div className="absolute inset-0 rounded-3xl overflow-hidden z-0">
+              <MapClient places={ITINERARY} selectedPlaceId={selectedPlaceId} />
             </div>
             
             {/* Playlist Overlay Details */}
-            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-black/40 backdrop-blur-md p-3 rounded-2xl text-white">
+            <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-black/40 backdrop-blur-md p-3 rounded-2xl text-white pointer-events-none z-10 shadow-lg border border-white/10">
               <div className="flex flex-col">
                 <span className="text-[10px] opacity-70 font-medium">NOW SELECTED</span>
-                <span className="text-xs font-bold truncate max-w-[150px]">부여 성흥산성 사랑나무</span>
+                <span className="text-xs font-bold truncate max-w-[150px]">
+                  {selectedPlaceId ? ITINERARY.find(p => p.id === selectedPlaceId)?.name : "전체 경로 보기"}
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 bg-brand-red rounded-full animate-pulse" />
@@ -119,14 +140,23 @@ export default function CourseMap() {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-2xl transition-colors cursor-pointer group"
+              onClick={() => setSelectedPlaceId(item.id)}
+              className={`flex items-center gap-4 p-3 rounded-2xl transition-colors cursor-pointer group ${
+                selectedPlaceId === item.id 
+                  ? 'bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-900/30' 
+                  : 'hover:bg-gray-50 dark:hover:bg-gray-900 border border-transparent'
+              }`}
             >
               <div className="w-6 text-sm font-bold text-gray-400 text-center">
                 {index + 1}
               </div>
               
-              <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform">
-                <MapPin size={20} className="text-gray-400 group-hover:text-brand-red transition-colors" />
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform ${
+                selectedPlaceId === item.id 
+                  ? 'bg-brand-red text-white scale-110 shadow-md shadow-red-200 dark:shadow-none' 
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-400 group-hover:scale-110'
+              }`}>
+                <MapPin size={20} className={selectedPlaceId === item.id ? 'text-white' : 'group-hover:text-brand-red transition-colors'} />
               </div>
               
               <div className="flex-1 min-w-0">
@@ -135,7 +165,9 @@ export default function CourseMap() {
               </div>
 
               <div className="flex items-center gap-3">
-                <span className="text-[11px] font-bold text-gray-400">{item.duration}</span>
+                <span className={`text-[11px] font-bold ${selectedPlaceId === item.id ? 'text-brand-red/80' : 'text-gray-400'}`}>
+                  {item.duration}
+                </span>
                 <button className="p-1 text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors">
                   <MoreVertical size={20} />
                 </button>
