@@ -20,6 +20,7 @@ export default function Home() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [trendIndex, setTrendIndex] = useState(0);
 
   const currentMonth = new Date().getMonth() + 1;
   const [festivals, setFestivals] = useState([]);
@@ -68,9 +69,9 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative flex items-center h-[52px] bg-[#f8f9fb] dark:bg-gray-900 border border-transparent focus-within:border-brand-red/30 rounded-2xl focus-within:bg-white dark:focus-within:bg-gray-950 shadow-sm transition-all group">
+        <div className="relative flex items-center h-[52px] bg-white dark:bg-gray-950 border border-brand-red/30 rounded-2xl shadow-sm transition-all group">
           <div className="absolute left-4 flex items-center pointer-events-none z-10">
-            <Search className="h-5 w-5 text-gray-400 group-focus-within:text-brand-red transition-colors" />
+            <Search className="h-5 w-5 text-brand-red transition-colors" />
           </div>
 
           <input
@@ -116,59 +117,81 @@ export default function Home() {
             <button className="text-xs font-bold text-gray-400 hover:text-brand-red">SEE ALL</button>
           </div>
 
-          <div className="space-y-6">
-            {isLoading ? (
-              [...Array(2)].map((_, idx) => (
-                <div key={idx} className="w-full h-64 rounded-[32px] bg-gray-200 dark:bg-gray-800 animate-pulse shadow-xl shadow-gray-200/50 dark:shadow-none" />
-              ))
-            ) : (
-              trendingPlaces.map((item: any, idx: number) => {
-                return (
-                  <motion.div
-                    key={item.place_id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
-                  >
-                    {/* ✅ 수정 START ================================ */}
-                    {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
-                    {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
-                    <img
-                      src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
-                      alt={item.name}
-                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
-                    />
-                    {/* ✅ 수정 END ================================== */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+          <div className="relative">
+            <div
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4"
+              onScroll={(e) => {
+                const target = e.target as HTMLDivElement;
+                const index = Math.round(target.scrollLeft / target.offsetWidth);
+                if (index !== trendIndex) setTrendIndex(index);
+              }}
+            >
+              {isLoading ? (
+                <div className="min-w-full w-full flex-shrink-0 snap-center pb-2">
+                  <div className="w-full h-64 rounded-[32px] bg-gray-200 dark:bg-gray-800 animate-pulse shadow-xl shadow-gray-200/50 dark:shadow-none" />
+                </div>
+              ) : (
+                trendingPlaces.map((item: any, idx: number) => {
+                  return (
+                    <div key={item.place_id} className="min-w-full w-full flex-shrink-0 snap-center pb-2">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
+                      >
+                        {/* ✅ 수정 START ================================ */}
+                        {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
+                        {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
+                        <img
+                          src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
+                          alt={item.name}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
+                        />
+                        {/* ✅ 수정 END ================================== */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
-                    {/* Play Button Overlay */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
-                      <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
-                        <Play size={32} className="text-white fill-white ml-1" />
-                      </div>
-                    </div>
+                        {/* Play Button Overlay */}
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
+                          <div className="w-16 h-16 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center border border-white/30">
+                            <Play size={32} className="text-white fill-white ml-1" />
+                          </div>
+                        </div>
 
-                    <div className="absolute bottom-6 left-6 right-6 text-white">
-                      <div className="flex flex-col gap-2">
-                        <span className="inline-block w-fit bg-brand-red px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
-                          {item.media_source}
-                        </span>
-                        <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
-                          {item.location}
-                        </h3>
-                      </div>
+                        <div className="absolute bottom-6 left-6 right-6 text-white">
+                          <div className="flex flex-col gap-2">
+                            <span className="inline-block w-fit bg-brand-red px-3 py-1 rounded-full text-[10px] font-black tracking-widest uppercase">
+                              {item.media_source}
+                            </span>
+                            <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
+                              {item.location}
+                            </h3>
+                          </div>
+                        </div>
+                      </motion.div>
                     </div>
-                  </motion.div>
-                );
-              })
+                  );
+                })
+              )}
+            </div>
+
+            {/* Dots Indicator */}
+            {!isLoading && trendingPlaces.length > 1 && (
+              <div className="flex justify-center items-center gap-1.5 mt-4">
+                {trendingPlaces.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className={`h-2 rounded-full transition-all duration-300 ${idx === trendIndex ? "bg-brand-red w-5" : "bg-gray-300 dark:bg-gray-700 w-2"
+                      }`}
+                  />
+                ))}
+              </div>
             )}
           </div>
         </section>
 
         {/* Hidden Destinations */}
-        <section className="mt-12 py-10 bg-gray-50/50 dark:bg-gray-900/30 border-y border-gray-100 dark:border-gray-800 transition-colors">
+        <section className="mt-8 py-8 bg-gray-50/50 dark:bg-gray-900/30 border-y border-gray-100 dark:border-gray-800 transition-colors">
           <div className="flex items-center justify-between px-5 mb-6">
             <div>
               <h2 className="flex items-center text-lg font-bold text-gray-900 dark:text-gray-100 gap-2 mb-1">
@@ -231,7 +254,7 @@ export default function Home() {
         </section>
 
         {/* Monthly Festivals */}
-        <section className="mt-8 px-5 pb-12">
+        <section className="mt-6 px-5 pb-12">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="flex items-center text-lg font-bold text-gray-900 dark:text-gray-100 gap-2 mb-1">
