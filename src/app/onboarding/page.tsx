@@ -18,7 +18,6 @@ export default function Onboarding() {
   const router = useRouter();
 
   // Form State
-  const [name, setName] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -32,15 +31,45 @@ export default function Onboarding() {
     }
   };
 
-  const isFormValid = name.trim() !== "" && age !== "" && gender !== "" && selectedTags.length > 0 && frequency !== "";
+  const isFormValid = age !== "" && gender !== "" && selectedTags.length > 0 && frequency !== "";
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isFormValid) {
-      // Typically save user info to context, localStorage, or API
-      localStorage.setItem('userName', name);
-      localStorage.setItem('userTags', JSON.stringify(selectedTags));
-      router.push("/home");
+    if (!isFormValid) return;
+
+    try {
+      const token = localStorage.getItem("triply_token");
+      const mappedGender = gender === "M" ? "남성" : "여성";
+
+      // Since the UI doesn't bucket tags into mood/companion/feature yet,
+      // we'll send it inside a general "flat" key to satisfy the JSON requirement.
+      const payload = {
+        gender: mappedGender,
+        travel_frequency: frequency,
+        travel_tags: {
+          flat_tags: selectedTags
+        }
+      };
+
+      const res = await fetch("http://localhost:5001/api/users/onboarding", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok && data.status === "success") {
+        router.push("/home");
+      } else {
+        alert(data.message || "온보딩 데이터 저장에 실패했습니다.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("온보딩 서버 연동 중 오류가 발생했습니다.");
     }
   };
 
@@ -75,18 +104,6 @@ export default function Onboarding() {
           variants={{ visible: { transition: { staggerChildren: 0.1 } } }}
           className="space-y-8"
         >
-          {/* Name */}
-          <motion.div variants={itemVariants} className="space-y-3">
-            <label className="block text-base font-bold text-gray-900 dark:text-gray-100">이름(닉네임)</label>
-            <input
-              type="text"
-              placeholder="예: 여행광"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl px-4 py-3.5 text-sm focus:border-brand-red focus:ring-1 focus:ring-brand-red outline-none transition-all dark:text-white"
-            />
-          </motion.div>
-
           {/* Info (Age / Gender) */}
           <motion.div variants={itemVariants} className="space-y-3">
             <label className="block text-base font-bold text-gray-900 dark:text-gray-100">내정보</label>

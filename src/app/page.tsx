@@ -10,7 +10,7 @@ export default function Splash() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      router.push("/onboarding");
+      router.push("/login");
     }, 2500);
     return () => clearTimeout(timer);
   }, [router]);
@@ -39,7 +39,7 @@ export default function Splash() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1, duration: 1 }}
-          className="text-red-50 text-base font-medium tracking-wide"
+          className="text-red-50 text-lg font-medium tracking-wide"
         >
           너만의 Trip playlist를 만들어봐
         </motion.p>

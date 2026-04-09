@@ -17,31 +17,80 @@ export default function MyPage() {
   const [isThemeOpen, setIsThemeOpen] = useState(false);
   const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
 
-  const toggleTag = (tag: string) => {
+  const toggleTag = async (tag: string) => {
+    let updatedTags: string[] = [];
     setTags((prev) => {
       const newTags = prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag];
-      localStorage.setItem('userTags', JSON.stringify(newTags));
+      updatedTags = newTags;
       return newTags;
     });
+
+    const token = localStorage.getItem("triply_token");
+    if (!token) return;
+
+    try {
+      await fetch("http://localhost:5001/api/users/preferences", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          travel_tags: { flat_tags: updatedTags }
+        })
+      });
+    } catch (e) {
+      console.error("Failed to update tags to server", e);
+    }
   };
 
   useEffect(() => {
-    const storedName = localStorage.getItem('userName');
-    if (storedName) {
-      setUserName(storedName);
-    }
+    const loadProfile = async () => {
+      const token = localStorage.getItem("triply_token");
+      if (!token) return;
 
-    const storedTags = localStorage.getItem('userTags');
-    if (storedTags) {
       try {
-        const parsedTags = JSON.parse(storedTags);
-        if (Array.isArray(parsedTags) && parsedTags.length > 0) {
-          setTags(parsedTags);
+        const res = await fetch("http://localhost:5001/api/users/me", {
+          method: "GET",
+          headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.status === "success") {
+          setUserName(data.data.name || "여행자");
+          
+          if (data.data.preferences && data.data.preferences.travel_tags) {
+            let tagsObj = data.data.preferences.travel_tags;
+            
+            // If the backend returns the JSON as a string, parse it first
+            if (typeof tagsObj === 'string') {
+              try {
+                tagsObj = JSON.parse(tagsObj);
+              } catch (e) {
+                console.error("Failed to parse travel_tags string", e);
+              }
+            }
+
+            const fetchedTags = tagsObj?.flat_tags;
+            if (Array.isArray(fetchedTags)) {
+              setTags(fetchedTags);
+            } else {
+              // Fallback just in case it's an array directly
+              if (Array.isArray(tagsObj)) {
+                setTags(tagsObj);
+              } else {
+                setTags([]);
+              }
+            }
+          } else {
+            setTags([]);
+          }
         }
       } catch (e) {
-        console.error("Failed to parse stored tags");
+        console.error("Failed to load user profile", e);
       }
-    }
+    };
+
+    loadProfile();
   }, []);
 
   return (
