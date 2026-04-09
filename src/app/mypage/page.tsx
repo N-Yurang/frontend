@@ -29,7 +29,7 @@ export default function MyPage() {
     if (!token) return;
 
     try {
-      await fetch("http://localhost:5001/api/users/preferences", {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/preferences`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +50,7 @@ export default function MyPage() {
       if (!token) return;
 
       try {
-        const res = await fetch("http://localhost:5001/api/users/me", {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
           method: "GET",
           headers: { "Authorization": `Bearer ${token}` }
         });

@@ -38,9 +38,9 @@ export default function Home() {
   useEffect(() => {
     setIsLoading(true);
     Promise.all([
-      fetch(`http://localhost:5001/api/festivals?month=${currentMonth}`).then(res => res.json()),
-      fetch("http://localhost:5001/api/places/trends").then(res => res.json()),
-      fetch("http://localhost:5001/api/places/hidden").then(res => res.json())
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/festivals?month=${currentMonth}`).then(res => res.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
     ])
       .then(([festivalsData, trendsData, hiddenData]) => {
         if (festivalsData && festivalsData.status === "success") setFestivals(festivalsData.data.festivals);
@@ -144,7 +144,7 @@ export default function Home() {
                         {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
                         {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
                         <img
-                          src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
+                          src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
                           alt={item.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                         />
@@ -227,7 +227,7 @@ export default function Home() {
                       {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
                       {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
                       <img
-                        src={item.image_url?.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`}
+                        src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
                         alt={item.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -277,7 +277,7 @@ export default function Home() {
               ))
             ) : (
               festivals.map((item: any, idx: number) => {
-                const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `http://localhost:5001${item.image_url}`) : item.image;
+                const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`) : item.image;
                 const title = item.name || item.title;
 
                 const formatDate = (dateStr: string) => {

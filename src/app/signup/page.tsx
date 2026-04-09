@@ -43,7 +43,7 @@ export default function Signup() {
         name: formData.name
       };
 
-      const res = await fetch("http://localhost:5001/api/auth/register", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -54,7 +54,7 @@ export default function Signup() {
       if (res.ok && data.status === "success") {
         // Automatically login to get the token for onboarding
         try {
-          const loginRes = await fetch("http://localhost:5001/api/auth/login", {
+          const loginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ user_id: payload.user_id, password: payload.password })
