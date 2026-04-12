@@ -7,8 +7,13 @@ import { Home, MessageCircle, Map, User } from 'lucide-react';
 export default function BottomNav() {
   const pathname = usePathname();
   
-  // Hide BottomNav on splash and onboarding
-  if (pathname === '/' || pathname === '/onboarding') {
+  // Hide BottomNav on splash, onboarding, login, and signup
+  if (
+    pathname === '/' || 
+    pathname === '/onboarding' || 
+    pathname === '/login' || 
+    pathname === '/signup'
+  ) {
     return null;
   }
 
