@@ -32,7 +32,8 @@ export default function CourseMap() {
         desc: p.type || "AI 추천 장소",
         duration: p.duration || "예정",
         lat: p.lat,
-        lng: p.lng
+        lng: p.lng,
+        tags: p.type ? [p.type] : []
       }))
     : [
         { 
@@ -41,7 +42,8 @@ export default function CourseMap() {
           desc: "인생샷 명소로 유명한 탁 트인 언덕",
           duration: "1h 30m",
           lat: 36.1950,
-          lng: 126.9038
+          lng: 126.9038,
+          tags: ["인스타핫플", "숨은명소"]
         },
         { 
           id: 2, 
@@ -49,7 +51,8 @@ export default function CourseMap() {
           desc: "점심 식사 및 현지 간식 탐방",
           duration: "1h 00m",
           lat: 36.2798,
-          lng: 126.9140
+          lng: 126.9140,
+          tags: ["축제중"]
         },
         { 
           id: 3, 
@@ -57,7 +60,8 @@ export default function CourseMap() {
           desc: "은은한 조명이 예쁜 산책로 마무~리",
           duration: "45m",
           lat: 36.2748,
-          lng: 126.9142
+          lng: 126.9142,
+          tags: ["숨은명소"]
         },
       ];
 
@@ -136,6 +140,15 @@ export default function CourseMap() {
               <div className="flex-1 min-w-0">
                 <h4 className="font-bold text-gray-900 dark:text-gray-100 truncate">{place.name}</h4>
                 <p className="text-xs text-gray-500 font-medium truncate mt-0.5">{place.desc}</p>
+                {place.tags && place.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {place.tags.map((tag, idx) => (
+                      <span key={idx} className="inline-flex items-center rounded-full bg-brand-red/10 text-brand-red px-2 py-0.5 text-[10px] font-bold">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-col items-end gap-1">

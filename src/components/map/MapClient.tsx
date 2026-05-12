@@ -15,6 +15,7 @@ interface Place {
   name: string;
   lat: number;
   lng: number;
+  tags?: string[];
 }
 
 interface MapClientProps {
@@ -61,6 +62,17 @@ export default function MapClient({ itinerary }: MapClientProps) {
             <div className="w-8 h-8 bg-brand-red text-white rounded-full flex items-center justify-center font-black shadow-lg border-2 border-white text-sm cursor-pointer hover:scale-110 transition-transform">
               {index + 1}
             </div>
+
+            {/* 배지 (태그들) - 왼쪽/오른쪽 번갈아 배치 */}
+            {place.tags && place.tags.length > 0 && (
+              <div className={`absolute top-1/2 -translate-y-1/2 flex flex-col gap-1 ${index % 2 === 0 ? 'right-full mr-3' : 'left-full ml-3'} pointer-events-none`}>
+                {place.tags.slice(0, 2).map((tag, idx) => (
+                  <span key={idx} className="text-[9px] font-bold bg-white/50 text-brand-red px-1.5 py-0.5 rounded-full whitespace-nowrap shadow-md border border-white/70">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
             {/* 호버 시 나타나는 장소명 라벨 */}
             {hoveredId === place.id && (
