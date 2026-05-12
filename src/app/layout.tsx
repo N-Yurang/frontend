@@ -40,6 +40,10 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="bg-gray-100 dark:bg-black flex justify-center min-h-screen transition-colors">
+        <Script
+          src={`//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_APP_KEY}&autoload=false`}
+          strategy="beforeInteractive"
+        />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <div className="w-full max-w-[480px] bg-white dark:bg-gray-950 min-h-screen relative shadow-2xl flex flex-col overflow-x-hidden text-gray-900 dark:text-gray-100 transition-colors">
             <main className="flex-1 pb-16">

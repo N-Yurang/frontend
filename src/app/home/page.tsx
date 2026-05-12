@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Search, MapPin, Calendar, Flame, Compass, Mic, Play, MoreHorizontal, Info } from "lucide-react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -15,6 +16,25 @@ const SEARCH_PLACEHOLDERS = [
   "엔딩 크레딧이 올라가면 시작되는 당신만의 여행",
 ];
 
+interface Festival {
+  festival_id?: number;
+  id?: number;
+  name?: string;
+  title?: string;
+  start_date?: string;
+  end_date?: string;
+  image_url?: string;
+  image?: string;
+  date?: string;
+}
+
+interface Place {
+  place_id: number;
+  name: string;
+  location: string;
+  image_url: string;
+  media_source?: string;
+}
 
 export default function Home() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -23,9 +43,9 @@ export default function Home() {
   const [trendIndex, setTrendIndex] = useState(0);
 
   const currentMonth = new Date().getMonth() + 1;
-  const [festivals, setFestivals] = useState([]);
-  const [trendingPlaces, setTrendingPlaces] = useState([]);
-  const [hiddenPlaces, setHiddenPlaces] = useState([]);
+  const [festivals, setFestivals] = useState<Festival[]>([]);
+  const [trendingPlaces, setTrendingPlaces] = useState<Place[]>([]);
+  const [hiddenPlaces, setHiddenPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -131,7 +151,7 @@ export default function Home() {
                   <div className="w-full h-64 rounded-[32px] bg-gray-200 dark:bg-gray-800 animate-pulse shadow-xl shadow-gray-200/50 dark:shadow-none" />
                 </div>
               ) : (
-                trendingPlaces.map((item: any, idx: number) => {
+                trendingPlaces.map((item: Place) => {
                   return (
                     <div key={item.place_id} className="min-w-full w-full flex-shrink-0 snap-center pb-2">
                       <motion.div
@@ -140,15 +160,11 @@ export default function Home() {
                         viewport={{ once: true }}
                         className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
                       >
-                        {/* ✅ 수정 START ================================ */}
-                        {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
-                        {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
                         <img
                           src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
                           alt={item.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                         />
-                        {/* ✅ 수정 END ================================== */}
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
 
                         {/* Play Button Overlay */}
@@ -212,7 +228,7 @@ export default function Home() {
                 </div>
               ))
             ) : (
-              hiddenPlaces.map((item: any, idx: number) => {
+              hiddenPlaces.map((item: Place, idx: number) => {
                 return (
                   <motion.div
                     key={item.place_id}
@@ -223,15 +239,11 @@ export default function Home() {
                     className="min-w-[160px] w-[calc(50vw-28px)] max-w-[200px] flex-shrink-0 group cursor-pointer"
                   >
                     <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
-                      {/* ✅ 수정 START ================================ */}
-                      {/* 1. src: http:// 중복 방지 위해 startsWith('http') 체크 추가 */}
-                      {/* 2. className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
                       <img
                         src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
                         alt={item.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      {/* ✅ 수정 END ================================== */}
                       {/* Small Play Indicator */}
                       <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Play size={14} className="text-white fill-white ml-0.5" />
@@ -276,7 +288,7 @@ export default function Home() {
                 </div>
               ))
             ) : (
-              festivals.map((item: any, idx: number) => {
+              festivals.map((item: Festival, idx: number) => {
                 const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`) : item.image;
                 const title = item.name || item.title;
 
@@ -300,14 +312,11 @@ export default function Home() {
                     className="min-w-[160px] flex-shrink-0 group cursor-pointer"
                   >
                     <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
-                      {/* ✅ 수정 START ================================ */}
-                      {/* className: absolute inset-0 추가 → 이미지가 컨테이너를 꽉 채우도록 수정 */}
                       <img
                         src={imageUrl}
                         alt={title}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
-                      {/* ✅ 수정 END ================================== */}
                       <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-lg text-[10px] font-black text-gray-900 dark:text-white transition-colors">
                         D-DAY
                       </div>

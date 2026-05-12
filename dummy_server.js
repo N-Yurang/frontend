@@ -47,6 +47,9 @@ const IMAGE_MAP = {
 };
 
 const server = http.createServer((req, res) => {
+  // 모든 요청 로깅 추가
+  console.log(`[${new Date().toLocaleTimeString()}] 요청 수신: ${req.url}`);
+
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -66,7 +69,27 @@ const server = http.createServer((req, res) => {
 
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
 
-  if (req.url === '/api/festivals') {
+  if (req.url === '/api/recommend') {
+    console.log(`[${new Date().toLocaleTimeString()}] 🤖 추천 요청 수신!`);
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      status: 'success',
+      ai_reply: "부여의 정취를 느낄 수 있는 추천 코스입니다. 성흥산성 사랑나무에서 인생샷을 남기고, 중앙시장에서 맛있는 간식을 드신 후 궁남지에서 야경을 즐겨보세요! 🎶",
+      itinerary: [
+        { order: 1, name: "성흥산성 사랑나무", lat: 36.1950, lng: 126.9038, type: "TREND", desc: "인생샷 명소로 유명한 탁 트인 언덕", duration: "1h 30m" },
+        { order: 2, name: "부여 중앙시장", lat: 36.2798, lng: 126.9140, type: "MARKET", desc: "점심 식사 및 현지 간식 탐방", duration: "1h 00m" },
+        { order: 3, name: "궁남지 야경", lat: 36.2748, lng: 126.9142, type: "NIGHT", desc: "은은한 조명이 예쁜 산책로", duration: "45m" }
+      ]
+    }));
+  } else if (req.url === '/api/auth/login' || req.url === '/api/auth/register') {
+    console.log(`[${new Date().toLocaleTimeString()}] 🔐 로그인/가입 요청 수신!`);
+    res.writeHead(200);
+    res.end(JSON.stringify({
+      status: 'success',
+      message: '성공',
+      data: { token: 'dummy-test-token' }
+    }));
+  } else if (req.url === '/api/festivals') {
     res.writeHead(200);
     res.end(JSON.stringify({ status: 'success', data: { festivals: FESTIVALS } }));
   } else if (req.url === '/api/places/hidden') {
@@ -77,6 +100,7 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ status: 'success', data: { places: TRENDS } }));
   } else {
     res.writeHead(404);
+    res.end();
   }
 });
 

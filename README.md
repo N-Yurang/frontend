@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 TRIPLY - AI Travel Recommendation
 
-## Getting Started
+AI 기반 맞춤형 여행 코스 추천 및 지도 시각화 서비스입니다.
 
-First, run the development server:
+## ✨ 새롭게 추가된 기능 (2026-05-12)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### 1. AI 챗봇 연동 및 동선 추천
+- **AI 플레이리스터**: 챗봇과 대화하여 맞춤형 여행 코스를 추천받을 수 있습니다.
+- **데이터 연동**: 챗봇이 추천한 장소 데이터를 **Zustand** 전역 스토어에 저장하여 페이지 이동 간 데이터를 유지합니다.
+- **자동 이동**: 추천이 완료되면 '추천 동선 확인하기' 버튼을 통해 즉시 지도 페이지로 이동합니다.
+
+### 2. 고도화된 지도 시각화 (카카오맵)
+- **넘버링 마커**: 방문 순서가 적힌 커스텀 마커를 표시합니다.
+- **폴리라인 (Polyline)**: 추천 경로를 선으로 연결하여 한눈에 동선을 파악할 수 있습니다.
+- **자동 범위 조절 (Auto-Bounds)**: 모든 추천 장소가 한 화면에 보이도록 지도를 자동으로 조정합니다.
+- **인터랙티브 호버**: 마커에 마우스를 올리면 장소 이름이 나타납니다.
+
+---
+
+## 🛠️ 로컬 개발 및 테스트 가이드
+
+### 1. 환경 변수 설정 (`.env`)
+카카오맵 SDK 사용을 위해 아래 키가 필요합니다.
+```env
+NEXT_PUBLIC_KAKAO_APP_KEY=45fb98ea25993d555ea0dd5fe334202f
+NEXT_PUBLIC_API_URL=https://triply-backend.onrender.com
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. 로컬 테스트 서버 실행 (중요)
+실제 백엔드 서버 없이 챗봇 및 로그인 기능을 테스트하려면 동봉된 `dummy_server.js`를 실행하세요.
+1. `.env` 파일의 `NEXT_PUBLIC_API_URL`을 `http://127.0.0.1:5001`로 변경합니다.
+2. 새 터미널에서 아래 명령어를 실행합니다.
+   ```bash
+   node dummy_server.js
+   ```
+3. 이제 로그인(아무 계정이나 가능) 및 챗봇 추천 기능을 즉시 테스트할 수 있습니다.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. 프론트엔드 실행
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📦 주요 기술 스택
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand (with Persist middleware)
+- **Map SDK**: React Kakao Maps SDK
+- **Icons**: Lucide React
+- **Animations**: Framer Motion

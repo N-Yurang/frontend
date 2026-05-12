@@ -2,7 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft } from 'lucide-react';
+import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useRecommendationStore, RecommendedPlace } from '@/store/useRecommendationStore';
 
 interface Message {
   id: string;
@@ -20,6 +22,9 @@ export default function TripAIChat() {
     },
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentItinerary, setCurrentItinerary] = useState<RecommendedPlace[] | null>(null);
+  const router = useRouter();
+  const setRecommendations = useRecommendationStore((state) => state.setRecommendations);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -44,8 +49,7 @@ export default function TripAIChat() {
     setIsLoading(true);
 
     try {
-      // 💡 주소를 127.0.0.1에서 localhost로 변경하여 연결 안정성을 높였습니다.
-      const response = await fetch("http://127.0.0.1:8000/api/recommend", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/recommend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_message: currentInput }),
@@ -64,6 +68,11 @@ export default function TripAIChat() {
           content: data.ai_reply,
         };
         setMessages((prev) => [...prev, aiMsg]);
+
+        // 추천 경로 데이터 저장 로직
+        if (data.itinerary && Array.isArray(data.itinerary)) {
+          setCurrentItinerary(data.itinerary);
+        }
       } else {
         throw new Error(data.message);
       }
@@ -88,7 +97,7 @@ export default function TripAIChat() {
 
       {/* Header */}
       <div className="pt-4 pb-4 px-5 bg-white dark:bg-gray-950 sticky top-0 z-10 border-b border-gray-50 dark:border-gray-900 flex items-center justify-between transition-colors">
-        <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
+        <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
           <ChevronLeft size={24} />
         </button>
         <h1 className="text-[17px] font-black text-gray-900 dark:text-gray-100 transition-colors flex items-center gap-2">
@@ -156,6 +165,29 @@ export default function TripAIChat() {
         )}
         <div ref={messagesEndRef} className="h-4" />
       </div>
+
+      {/* Floating Confirm Button */}
+      <AnimatePresence>
+        {currentItinerary && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="absolute bottom-32 left-0 right-0 px-10 z-20"
+          >
+            <button 
+              onClick={() => {
+                setRecommendations(currentItinerary);
+                router.push('/map');
+              }}
+              className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl shadow-2xl flex items-center justify-center gap-3 font-black text-[16px] hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <MapIcon size={20} />
+              <span>추천 동선 확인하기</span>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Input Overlay / Controller Style */}
       <div className="px-5 py-4 pb-8 bg-white dark:bg-gray-950 transition-colors border-t border-gray-50 dark:border-gray-900">
