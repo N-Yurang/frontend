@@ -49,7 +49,7 @@ export default function TripAIChat() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/ai/recommend`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_AI_URL}/ai/recommend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -62,23 +62,31 @@ export default function TripAIChat() {
       if (!response.ok) {
         throw new Error("서버 응답 에러");
       }
-
       const data = await response.json();
 
-      if (data.status === "success") {
-        const aiMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "ai",
-          content: data.ai_reply,
-        };
-        setMessages((prev) => [...prev, aiMsg]);
+      if (data.reply || data.itinerary) {
+        if (data.reply) {
+          const aiMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            role: "ai",
+            content: data.reply,
+          };
+          setMessages((prev) => [...prev, aiMsg]);
+        }
 
         // 추천 경로 데이터 저장 로직
-        if (data.itinerary && Array.isArray(data.itinerary)) {
+        if (data.itinerary && Array.isArray(data.itinerary) && data.itinerary.length > 0) {
           setCurrentItinerary(data.itinerary);
+
+          const successMsg: Message = {
+            id: (Date.now() + 2).toString(),
+            role: "ai",
+            content: "원하시는 분위기에 맞게 여행 코스 기획을 완료했어요! 아래 버튼을 눌러 동선을 확인해 보세요! ✨",
+          };
+          setMessages((prev) => [...prev, successMsg]);
         }
       } else {
-        throw new Error(data.message);
+        throw new Error(data.message || "AI 응답 형식이 다릅니다.");
       }
     } catch (error) {
       console.error("AI 연결 실패:", error);
