@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon } from 'lucide-react';
+import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useRecommendationStore, RecommendedPlace } from '@/store/useRecommendationStore';
 
@@ -64,6 +64,17 @@ export default function TripAIChat() {
       }
       const data = await response.json();
 
+      // 응답 데이터가 아예 없거나 비어있는 경우 처리
+      if (!data || (!data.reply && (!data.itinerary || data.itinerary.length === 0))) {
+        const noDataMsg: Message = {
+          id: (Date.now() + 1).toString(),
+          role: "ai",
+          content: "죄송해요, 요청하신 조건에 맞는 장소를 찾지 못했어요. 😢\n다른 키워드나 분위기로 다시 한번 말씀해 주시겠어요?",
+        };
+        setMessages((prev) => [...prev, noDataMsg]);
+        return;
+      }
+
       if (data.reply || data.itinerary) {
         if (data.reply) {
           const aiMsg: Message = {
@@ -85,15 +96,13 @@ export default function TripAIChat() {
           };
           setMessages((prev) => [...prev, successMsg]);
         }
-      } else {
-        throw new Error(data.message || "AI 응답 형식이 다릅니다.");
       }
     } catch (error) {
       console.error("AI 연결 실패:", error);
       const errorMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        content: "죄송해요, AI 플레이리스터 서버와 잠시 연결이 끊겼어요. 파이썬 터미널에서 서버가 켜져 있는지 확인해 주세요! 🎶",
+        content: "죄송해요, AI 플레이리스터 서버와 잠시 연결이 끊겼어요. 잠시 후 다시 시도해 주세요! 🎶",
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -159,19 +168,43 @@ export default function TripAIChat() {
         </AnimatePresence>
 
         {isLoading && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col items-start pt-2">
-            <div className="flex items-center gap-2 mb-2 ml-1">
-              <span className="text-[9px] font-bold text-gray-400 animate-pulse uppercase tracking-wider">PLAYLISTER IS ANALYZING...</span>
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }} 
+            animate={{ opacity: 1, y: 0 }} 
+            className="flex flex-col items-start pt-2 space-y-3"
+          >
+            <div className="flex items-center gap-2 mb-1 ml-1">
+              <div className="w-5 h-5 bg-brand-red/10 rounded-full flex items-center justify-center animate-spin-slow">
+                <Headphones size={12} className="text-brand-red" />
+              </div>
+              <span className="text-[10px] font-black text-brand-red tracking-widest uppercase animate-pulse">
+                TRIPLY가 최적의 경로를 분석 중입니다...
+              </span>
             </div>
-            <div className="bg-white/50 dark:bg-gray-800/50 border border-white/50 dark:border-gray-700/50 px-6 py-4 rounded-[24px] rounded-tl-none shadow-sm flex items-center gap-1.5 backdrop-blur-md">
-              {[0.1, 0.2, 0.3, 0.4].map((delay, i) => (
-                <motion.div
-                  key={i}
-                  animate={{ height: [8, 16, 8] }}
-                  transition={{ repeat: Infinity, duration: 0.6, delay }}
-                  className="w-1 bg-brand-red rounded-full"
-                />
-              ))}
+            
+            <div className="bg-white/80 dark:bg-gray-800/80 border border-white/50 dark:border-gray-700/50 px-5 py-3.5 rounded-[24px] rounded-tl-none shadow-lg backdrop-blur-md flex items-center gap-4">
+              <div className="relative">
+                <Loader2 className="w-5 h-5 text-brand-red animate-spin" />
+                <div className="absolute inset-0 bg-brand-red/20 blur-md rounded-full animate-pulse" />
+              </div>
+              <div className="flex gap-1.5 items-center">
+                {[0, 1, 2].map((i) => (
+                  <motion.div
+                    key={i}
+                    animate={{ 
+                      y: [0, -5, 0],
+                      opacity: [0.3, 1, 0.3]
+                    }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 0.8, 
+                      delay: i * 0.15,
+                      ease: "easeInOut"
+                    }}
+                    className="w-1.5 h-1.5 bg-brand-red rounded-full"
+                  />
+                ))}
+              </div>
             </div>
           </motion.div>
         )}

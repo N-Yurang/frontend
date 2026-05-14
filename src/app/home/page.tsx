@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, Calendar, Flame, Compass, Mic, Play, MoreHorizontal, Info } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Image from "next/image";
@@ -41,12 +41,91 @@ export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [trendIndex, setTrendIndex] = useState(0);
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(true);
+  const wheelTimeout = useRef<NodeJS.Timeout | null>(null);
+  const sliderContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleDragStart = (e: React.TouchEvent | React.MouseEvent) => {
+    if ('targetTouches' in e) {
+      setTouchStart(e.targetTouches[0].clientX);
+    } else {
+      setTouchStart((e as React.MouseEvent).clientX);
+    }
+    setTouchEnd(0);
+  };
+
+  const handleDragMove = (e: React.TouchEvent | React.MouseEvent) => {
+    if ('targetTouches' in e) {
+      setTouchEnd(e.targetTouches[0].clientX);
+    } else {
+      setTouchEnd((e as React.MouseEvent).clientX);
+    }
+  };
+
+  const handleDragEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    
+    // 왼쪽으로 스와이프 (다음)
+    if (distance > 50) {
+      setIsTransitioning(true);
+      setTrendIndex((prev) => {
+        if (prev >= trendingPlaces.length) return prev;
+        return prev + 1;
+      });
+    } 
+    // 오른쪽으로 스와이프 (이전)
+    else if (distance < -50) {
+      setIsTransitioning(true);
+      setTrendIndex((prev) => (prev <= 0 ? trendingPlaces.length - 1 : prev - 1));
+    }
+    
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
 
   const currentMonth = new Date().getMonth() + 1;
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [trendingPlaces, setTrendingPlaces] = useState<Place[]>([]);
   const [hiddenPlaces, setHiddenPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const container = sliderContainerRef.current;
+    if (!container) return;
+
+    const handleNativeWheel = (e: WheelEvent) => {
+      // 트랙패드 좌우 스와이프 감지
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
+        e.preventDefault(); // 웹 브라우저의 기본 스와이프 뒤로가기/앞으로가기 방지
+
+        if (Math.abs(e.deltaX) > 15) {
+          if (wheelTimeout.current) return;
+          
+          if (e.deltaX > 0) {
+            setIsTransitioning(true);
+            setTrendIndex((prev) => {
+              if (prev >= trendingPlaces.length) return prev;
+              return prev + 1;
+            });
+          } else {
+            setIsTransitioning(true);
+            setTrendIndex((prev) => (prev <= 0 ? trendingPlaces.length - 1 : prev - 1));
+          }
+          
+          wheelTimeout.current = setTimeout(() => {
+            wheelTimeout.current = null;
+          }, 600);
+        }
+      }
+    };
+
+    // passive: false로 이벤트를 등록해야 preventDefault()가 동작함
+    container.addEventListener('wheel', handleNativeWheel, { passive: false });
+    return () => container.removeEventListener('wheel', handleNativeWheel);
+  }, [trendingPlaces.length]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -72,6 +151,33 @@ export default function Home() {
         setIsLoading(false);
       });
   }, [currentMonth]);
+
+  // 2초마다 미디어 속 여행지 자동 슬라이드
+  useEffect(() => {
+    if (isLoading || trendingPlaces.length <= 1) return;
+    const interval = setInterval(() => {
+      setIsTransitioning(true);
+      setTrendIndex((prev) => {
+        if (prev >= trendingPlaces.length) return prev;
+        return prev + 1;
+      });
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [isLoading, trendingPlaces.length]);
+
+  // 무한 루프: 마지막 카드(클론)에 도달하면 애니메이션 없이 실제 첫 카드로 이동
+  useEffect(() => {
+    if (trendIndex === trendingPlaces.length && trendingPlaces.length > 0) {
+      const timeout = setTimeout(() => {
+        setIsTransitioning(false); // 애니메이션 끄기
+        setTrendIndex(0); // 실제 첫 번째 인덱스로 이동
+        
+        // 브라우저 렌더링 후 다시 애니메이션 켜기
+        setTimeout(() => setIsTransitioning(true), 50);
+      }, 700); // CSS transition duration (700ms)과 동일하게 설정
+      return () => clearTimeout(timeout);
+    }
+  }, [trendIndex, trendingPlaces.length]);
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 pb-20 transition-colors duration-300">
@@ -138,28 +244,28 @@ export default function Home() {
           </div>
 
           <div className="relative">
-            <div
-              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4"
-              onScroll={(e) => {
-                const target = e.target as HTMLDivElement;
-                const index = Math.round(target.scrollLeft / target.offsetWidth);
-                if (index !== trendIndex) setTrendIndex(index);
-              }}
+            {/* 슬라이더 컨테이너: overflow-hidden + translateX로 부드럽게 전환 */}
+            <div 
+              ref={sliderContainerRef}
+              className="overflow-hidden rounded-[32px] pb-2 cursor-grab active:cursor-grabbing"
+              onTouchStart={handleDragStart}
+              onTouchMove={handleDragMove}
+              onTouchEnd={handleDragEnd}
+              onMouseDown={handleDragStart}
+              onMouseMove={(e) => touchStart !== 0 && handleDragMove(e)}
+              onMouseUp={handleDragEnd}
+              onMouseLeave={handleDragEnd}
             >
               {isLoading ? (
-                <div className="min-w-full w-full flex-shrink-0 snap-center pb-2">
-                  <div className="w-full h-64 rounded-[32px] bg-gray-200 dark:bg-gray-800 animate-pulse shadow-xl shadow-gray-200/50 dark:shadow-none" />
-                </div>
+                <div className="w-full h-64 rounded-[32px] bg-gray-200 dark:bg-gray-800 animate-pulse shadow-xl shadow-gray-200/50 dark:shadow-none" />
               ) : (
-                trendingPlaces.map((item: Place) => {
-                  return (
-                    <div key={item.place_id} className="min-w-full w-full flex-shrink-0 snap-center pb-2">
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800"
-                      >
+                <div
+                  className={`flex gap-4 ${isTransitioning ? "transition-transform duration-700 ease-in-out" : ""}`}
+                  style={{ transform: `translateX(calc(-${trendIndex * 100}% - ${trendIndex}rem))` }}
+                >
+                  {(trendingPlaces.length > 0 ? [...trendingPlaces, trendingPlaces[0]] : []).map((item: Place, idx) => (
+                    <div key={`${item.place_id}-${idx}`} className="min-w-full flex-shrink-0">
+                      <div className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800">
                         <img
                           src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
                           alt={item.name}
@@ -184,10 +290,10 @@ export default function Home() {
                             </h3>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     </div>
-                  );
-                })
+                  ))}
+                </div>
               )}
             </div>
 
@@ -197,8 +303,7 @@ export default function Home() {
                 {trendingPlaces.map((_, idx) => (
                   <div
                     key={idx}
-                    className={`h-2 rounded-full transition-all duration-300 ${idx === trendIndex ? "bg-brand-red w-5" : "bg-gray-300 dark:bg-gray-700 w-2"
-                      }`}
+                    className={`h-2 rounded-full transition-all duration-300 ${idx === (trendIndex % trendingPlaces.length) ? "bg-brand-red w-5" : "bg-gray-300 dark:bg-gray-700 w-2"}`}
                   />
                 ))}
               </div>
