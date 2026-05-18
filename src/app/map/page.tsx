@@ -17,7 +17,7 @@ import { useRecommendationStore } from "@/store/useRecommendationStore";
 // dynamically import leaflet component with ssr: false
 const MapClient = dynamic(() => import('@/components/map/MapClient'), { 
   ssr: false,
-  loading: () => <div className="h-[400px] w-full bg-gray-100 animate-pulse rounded-3xl flex items-center justify-center text-gray-400">지도 로딩 중...</div>
+  loading: () => <div className="h-[280px] w-full bg-gray-100 animate-pulse rounded-3xl flex items-center justify-center text-gray-400">지도 로딩 중...</div>
 });
 
 export default function CourseMap() {
@@ -67,7 +67,7 @@ export default function CourseMap() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 pb-20 transition-colors duration-300">
-      <header className="p-5 flex items-center justify-between sticky top-0 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md z-10">
+      <header className="p-5 flex items-center justify-between">
         <button className="w-10 h-10 flex items-center justify-center text-gray-900 dark:text-white bg-gray-100 dark:bg-gray-900 rounded-full">
           <ChevronLeft size={24} />
         </button>
@@ -78,16 +78,18 @@ export default function CourseMap() {
       </header>
 
       <main className="flex-1 px-5">
-        <section className="mb-8 relative group">
+        <div className="sticky top-0 z-20 pt-2 pb-6 bg-white dark:bg-gray-950 -mx-5 px-5">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="rounded-[2.5rem] overflow-hidden shadow-2xl shadow-brand-red/20 border border-gray-100 dark:border-gray-800"
           >
-            <MapClient itinerary={ITINERARY} />
+            <MapClient itinerary={ITINERARY} selectedPlaceId={selectedPlaceId} />
           </motion.div>
+        </div>
 
-          <div className="mt-8">
+        <section className="mb-8 relative group">
+          <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100 mb-1">
               {recommendations.length > 0 ? "AI 추천 여행 코스" : "부여 감성 당일치기"}
             </h2>
@@ -109,7 +111,12 @@ export default function CourseMap() {
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Track List</h3>
             <div className="flex items-center gap-4">
               <button className="text-gray-400 hover:text-brand-red transition-colors"><Shuffle size={18} /></button>
-              <button className="w-8 h-8 bg-brand-red text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-red/30"><Play size={14} fill="currentColor" /></button>
+              <button 
+                onClick={() => setSelectedPlaceId(null)}
+                className="w-8 h-8 bg-brand-red text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-red/30"
+              >
+                <Play size={14} fill="currentColor" />
+              </button>
             </div>
           </div>
 

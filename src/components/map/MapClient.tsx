@@ -20,9 +20,10 @@ interface Place {
 
 interface MapClientProps {
   itinerary: Place[];
+  selectedPlaceId?: number | null;
 }
 
-export default function MapClient({ itinerary }: MapClientProps) {
+export default function MapClient({ itinerary, selectedPlaceId }: MapClientProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [map, setMap] = useState<any>(null);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
@@ -30,6 +31,8 @@ export default function MapClient({ itinerary }: MapClientProps) {
   // 자동 범위 조절 (Auto Bounds)
   useEffect(() => {
     if (!map || itinerary.length === 0) return;
+    // 특정 장소가 선택된 상태라면 바운즈 자동 조절을 건너뜀 (직접 확대/이동을 위해)
+    if (selectedPlaceId) return;
 
     const bounds = new window.kakao.maps.LatLngBounds();
     itinerary.forEach((place) => {
@@ -37,12 +40,24 @@ export default function MapClient({ itinerary }: MapClientProps) {
     });
 
     map.setBounds(bounds);
-  }, [map, itinerary]);
+  }, [map, itinerary, selectedPlaceId]);
+
+  // 선택된 장소로 지도 이동 및 확대
+  useEffect(() => {
+    if (!map || !selectedPlaceId) return;
+
+    const selectedPlace = itinerary.find((p) => p.id === selectedPlaceId);
+    if (selectedPlace) {
+      const position = new window.kakao.maps.LatLng(selectedPlace.lat, selectedPlace.lng);
+      map.setLevel(4, { animate: true }); // 확대 (숫자가 작을수록 확대됨)
+      map.panTo(position); // 부드럽게 이동
+    }
+  }, [map, selectedPlaceId, itinerary]);
 
   return (
     <Map
       center={{ lat: 36.2748, lng: 126.9142 }}
-      style={{ width: "100%", height: "400px" }}
+      style={{ width: "100%", height: "280px" }}
       level={5}
       onCreate={setMap}
     >

@@ -5,24 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useRecommendationStore, RecommendedPlace } from '@/store/useRecommendationStore';
-
-interface Message {
-  id: string;
-  role: 'user' | 'ai';
-  content: string;
-}
+import { useChatStore, Message } from '@/store/useChatStore';
 
 export default function TripAIChat() {
   const [input, setInput] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "init",
-      role: "ai",
-      content: "안녕하세요! TRIPLY AI 플레이리스터입니다❤️\n\n여러분의 여행을 하나의 특별한 트랙 리스트로 멋지게 기획해 드릴게요. 어떤 분위기의 여행을 꿈꾸고 계신가요? 🎶",
-    },
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [currentItinerary, setCurrentItinerary] = useState<RecommendedPlace[] | null>(null);
+  const { messages, currentItinerary, isLoading, sendMessage } = useChatStore();
   const router = useRouter();
   const setRecommendations = useRecommendationStore((state) => state.setRecommendations);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -33,74 +20,13 @@ export default function TripAIChat() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return;
-
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-    };
-    setMessages((prev) => [...prev, userMsg]);
     const currentInput = input;
     setInput("");
-    setIsLoading(true);
-
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_AI_URL}/ai/recommend`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          chat_history: [
-            { role: "user", content: currentInput }
-          ]
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("서버 응답 에러");
-      }
-      const data = await response.json();
-
-      // 응답 데이터가 아예 없거나 비어있는 경우 처리
-      if (!data || (!data.reply && (!data.itinerary || data.itinerary.length === 0))) {
-        const noDataMsg: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "ai",
-          content: "죄송해요, 요청하신 조건에 맞는 장소를 찾지 못했어요. 😢\n다른 키워드나 분위기로 다시 한번 말씀해 주시겠어요?",
-        };
-        setMessages((prev) => [...prev, noDataMsg]);
-        return;
-      }
-
-      if (data.reply || data.itinerary) {
-        if (data.reply) {
-          const aiMsg: Message = {
-            id: (Date.now() + 1).toString(),
-            role: "ai",
-            content: data.reply,
-          };
-          setMessages((prev) => [...prev, aiMsg]);
-        }
-
-        // 추천 경로 데이터 저장 로직
-        if (data.itinerary && Array.isArray(data.itinerary) && data.itinerary.length > 0) {
-          setCurrentItinerary(data.itinerary);
-        }
-      }
-    } catch (error) {
-      console.error("AI 연결 실패:", error);
-      const errorMsg: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "ai",
-        content: "죄송해요, AI 플레이리스터 서버와 잠시 연결이 끊겼어요. 잠시 후 다시 시도해 주세요! 🎶",
-      };
-      setMessages((prev) => [...prev, errorMsg]);
-    } finally {
-      setIsLoading(false);
-    }
+    await sendMessage(currentInput);
   };
 
   return (
@@ -124,7 +50,7 @@ export default function TripAIChat() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 overflow-y-auto p-5 scrollbar-hide space-y-8 bg-gray-50/30 dark:bg-gray-950/20 backdrop-blur-sm">
+      <div className="flex-1 overflow-y-auto px-5 pt-5 pb-1 scrollbar-hide space-y-8 bg-gray-50/30 dark:bg-gray-950/20 backdrop-blur-sm">
         <AnimatePresence initial={false}>
           {messages.map((msg, idx) => (
             <motion.div
@@ -201,31 +127,31 @@ export default function TripAIChat() {
             </div>
           </motion.div>
         )}
-        <div ref={messagesEndRef} className="h-4" />
-      </div>
-
-      {/* Floating Confirm Button */}
-      <AnimatePresence>
-        {currentItinerary && (
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="absolute bottom-32 left-0 right-0 px-10 z-20"
-          >
-            <button
-              onClick={() => {
-                setRecommendations(currentItinerary);
-                router.push('/map');
-              }}
-              className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-2xl shadow-2xl flex items-center justify-center gap-3 font-black text-[16px] hover:scale-[1.02] active:scale-[0.98] transition-all"
+        {/* Inline Confirm Button */}
+        <AnimatePresence>
+          {currentItinerary && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="flex justify-center pt-2"
             >
-              <MapIcon size={20} />
-              <span>추천 동선 확인하기</span>
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              <button
+                onClick={() => {
+                  setRecommendations(currentItinerary);
+                  router.push('/map');
+                }}
+                className="px-6 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg flex items-center justify-center gap-2 font-black text-[14px] hover:scale-[1.02] active:scale-[0.98] transition-all"
+              >
+                <MapIcon size={18} />
+                <span>추천 동선 확인하기</span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div ref={messagesEndRef} className="!mt-0 !h-0 opacity-0 overflow-hidden" />
+      </div>
 
       {/* Input Overlay / Controller Style */}
       <div className="px-5 py-4 pb-8 bg-white dark:bg-gray-950 transition-colors border-t border-gray-50 dark:border-gray-900">

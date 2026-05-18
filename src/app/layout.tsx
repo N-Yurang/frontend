@@ -45,7 +45,7 @@ export default function RootLayout({
           strategy="beforeInteractive"
         />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <div className="w-full max-w-[480px] bg-white dark:bg-gray-950 min-h-screen relative shadow-2xl flex flex-col overflow-x-hidden text-gray-900 dark:text-gray-100 transition-colors">
+          <div className="w-full max-w-[480px] bg-white dark:bg-gray-950 min-h-screen relative shadow-2xl flex flex-col overflow-x-clip text-gray-900 dark:text-gray-100 transition-colors">
             <main className="flex-1 pb-16">
               {children}
             </main>
