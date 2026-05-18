@@ -53,10 +53,10 @@ export default function TripAIChat() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-           chat_history: [
-                { role: "user", content: currentInput }
-            ]
-         }),
+          chat_history: [
+            { role: "user", content: currentInput }
+          ]
+        }),
       });
 
       if (!response.ok) {
@@ -88,13 +88,6 @@ export default function TripAIChat() {
         // 추천 경로 데이터 저장 로직
         if (data.itinerary && Array.isArray(data.itinerary) && data.itinerary.length > 0) {
           setCurrentItinerary(data.itinerary);
-
-          const successMsg: Message = {
-            id: (Date.now() + 2).toString(),
-            role: "ai",
-            content: "원하시는 분위기에 맞게 여행 코스 기획을 완료했어요! 아래 버튼을 눌러 동선을 확인해 보세요! ✨",
-          };
-          setMessages((prev) => [...prev, successMsg]);
         }
       }
     } catch (error) {
@@ -168,9 +161,9 @@ export default function TripAIChat() {
         </AnimatePresence>
 
         {isLoading && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }} 
-            animate={{ opacity: 1, y: 0 }} 
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-start pt-2 space-y-3"
           >
             <div className="flex items-center gap-2 mb-1 ml-1">
@@ -181,7 +174,7 @@ export default function TripAIChat() {
                 TRIPLY가 최적의 경로를 분석 중입니다...
               </span>
             </div>
-            
+
             <div className="bg-white/80 dark:bg-gray-800/80 border border-white/50 dark:border-gray-700/50 px-5 py-3.5 rounded-[24px] rounded-tl-none shadow-lg backdrop-blur-md flex items-center gap-4">
               <div className="relative">
                 <Loader2 className="w-5 h-5 text-brand-red animate-spin" />
@@ -191,13 +184,13 @@ export default function TripAIChat() {
                 {[0, 1, 2].map((i) => (
                   <motion.div
                     key={i}
-                    animate={{ 
+                    animate={{
                       y: [0, -5, 0],
                       opacity: [0.3, 1, 0.3]
                     }}
-                    transition={{ 
-                      repeat: Infinity, 
-                      duration: 0.8, 
+                    transition={{
+                      repeat: Infinity,
+                      duration: 0.8,
                       delay: i * 0.15,
                       ease: "easeInOut"
                     }}
@@ -214,13 +207,13 @@ export default function TripAIChat() {
       {/* Floating Confirm Button */}
       <AnimatePresence>
         {currentItinerary && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
             className="absolute bottom-32 left-0 right-0 px-10 z-20"
           >
-            <button 
+            <button
               onClick={() => {
                 setRecommendations(currentItinerary);
                 router.push('/map');

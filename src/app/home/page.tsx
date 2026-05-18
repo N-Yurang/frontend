@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, MapPin, Calendar, Flame, Compass, Mic, Play, MoreHorizontal, Info } from "lucide-react";
+import { Search, MapPin, Calendar, Flame, Compass, Mic, Play, MoreHorizontal, Info, Heart } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -44,6 +44,7 @@ export default function Home() {
   const [touchStart, setTouchStart] = useState(0);
   const [touchEnd, setTouchEnd] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(true);
+  const [isHovered, setIsHovered] = useState(false);
   const wheelTimeout = useRef<NodeJS.Timeout | null>(null);
   const sliderContainerRef = useRef<HTMLDivElement>(null);
 
@@ -91,6 +92,20 @@ export default function Home() {
   const [trendingPlaces, setTrendingPlaces] = useState<Place[]>([]);
   const [hiddenPlaces, setHiddenPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
+
+  const toggleLike = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    setLikedItems((prev) => {
+      const newLiked = new Set(prev);
+      if (newLiked.has(id)) {
+        newLiked.delete(id);
+      } else {
+        newLiked.add(id);
+      }
+      return newLiked;
+    });
+  };
 
   useEffect(() => {
     const container = sliderContainerRef.current;
@@ -154,7 +169,7 @@ export default function Home() {
 
   // 2초마다 미디어 속 여행지 자동 슬라이드
   useEffect(() => {
-    if (isLoading || trendingPlaces.length <= 1) return;
+    if (isLoading || trendingPlaces.length <= 1 || isHovered) return;
     const interval = setInterval(() => {
       setIsTransitioning(true);
       setTrendIndex((prev) => {
@@ -163,7 +178,7 @@ export default function Home() {
       });
     }, 2000);
     return () => clearInterval(interval);
-  }, [isLoading, trendingPlaces.length]);
+  }, [isLoading, trendingPlaces.length, isHovered]);
 
   // 무한 루프: 마지막 카드(클론)에 도달하면 애니메이션 없이 실제 첫 카드로 이동
   useEffect(() => {
@@ -254,7 +269,11 @@ export default function Home() {
               onMouseDown={handleDragStart}
               onMouseMove={(e) => touchStart !== 0 && handleDragMove(e)}
               onMouseUp={handleDragEnd}
-              onMouseLeave={handleDragEnd}
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => {
+                setIsHovered(false);
+                handleDragEnd();
+              }}
             >
               {isLoading ? (
                 <div className="w-full h-64 rounded-[32px] bg-gray-200 dark:bg-gray-800 animate-pulse shadow-xl shadow-gray-200/50 dark:shadow-none" />
@@ -272,6 +291,17 @@ export default function Home() {
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                        
+                        {/* Like Button */}
+                        <button
+                          onClick={(e) => toggleLike(e, `place-${item.place_id}`)}
+                          className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-white/40 active:scale-95"
+                        >
+                          <Heart
+                            size={20}
+                            className={`transition-colors ${likedItems.has(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                          />
+                        </button>
 
                         {/* Play Button Overlay */}
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-75 group-hover:scale-100">
@@ -349,6 +379,18 @@ export default function Home() {
                         alt={item.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
+                      
+                      {/* Like Button */}
+                      <button
+                        onClick={(e) => toggleLike(e, `place-${item.place_id}`)}
+                        className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
+                      >
+                        <Heart
+                          size={16}
+                          className={`transition-colors ${likedItems.has(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                        />
+                      </button>
+
                       {/* Small Play Indicator */}
                       <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Play size={14} className="text-white fill-white ml-0.5" />
@@ -422,6 +464,18 @@ export default function Home() {
                         alt={title}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                       />
+
+                      {/* Like Button */}
+                      <button
+                        onClick={(e) => toggleLike(e, `festival-${item.festival_id || item.id}`)}
+                        className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
+                      >
+                        <Heart
+                          size={16}
+                          className={`transition-colors ${likedItems.has(`festival-${item.festival_id || item.id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                        />
+                      </button>
+
                       <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-lg text-[10px] font-black text-gray-900 dark:text-white transition-colors">
                         D-DAY
                       </div>
