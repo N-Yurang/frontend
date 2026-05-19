@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, MapPin, Calendar, Flame, Compass, Mic, Play, MoreHorizontal, Info, Heart } from "lucide-react";
+import { Search, MapPin, Calendar, Flame, Compass, Mic, Play, MoreHorizontal, Info, Heart, Bell } from "lucide-react";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import NotificationSheet from "@/components/ui/NotificationSheet";
 
 const SEARCH_PLACEHOLDERS = [
   "어디로 떠나볼까요? (예: 영월)",
@@ -39,6 +40,7 @@ interface Place {
 export default function Home() {
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [trendIndex, setTrendIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
@@ -204,6 +206,11 @@ export default function Home() {
             TRIPLY
           </h1>
           <div className="flex gap-3 w-10 justify-end">
+            <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors relative" onClick={() => setIsNotificationOpen(true)}>
+              <Bell size={20} />
+              {/* Unread indicator */}
+              <span className="absolute top-0 right-0 w-2 h-2 bg-[#FF4B4B] rounded-full border-2 border-white dark:border-gray-950"></span>
+            </button>
             <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
               <Info size={20} />
             </button>
@@ -489,6 +496,11 @@ export default function Home() {
           </div>
         </section>
       </div>
+
+      <NotificationSheet 
+        isOpen={isNotificationOpen} 
+        onClose={() => setIsNotificationOpen(false)} 
+      />
     </div>
   );
 }
