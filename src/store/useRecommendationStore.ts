@@ -9,11 +9,13 @@ export interface RecommendedPlace {
   type: string;
   desc?: string;
   duration?: string;
+  tags?: string[];
 }
 
 interface RecommendationState {
   recommendations: RecommendedPlace[];
-  setRecommendations: (recommendations: RecommendedPlace[]) => void;
+  tripTitle: string;
+  setRecommendations: (recommendations: RecommendedPlace[], title?: string) => void;
   clearRecommendations: () => void;
 }
 
@@ -21,8 +23,9 @@ export const useRecommendationStore = create<RecommendationState>()(
   persist(
     (set) => ({
       recommendations: [],
-      setRecommendations: (recommendations) => set({ recommendations }),
-      clearRecommendations: () => set({ recommendations: [] }),
+      tripTitle: "AI 추천 여행 코스",
+      setRecommendations: (recommendations, title) => set({ recommendations, tripTitle: title || "AI 추천 여행 코스" }),
+      clearRecommendations: () => set({ recommendations: [], tripTitle: "AI 추천 여행 코스" }),
     }),
     {
       name: 'recommendation-storage',

@@ -2,14 +2,15 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon, Loader2 } from 'lucide-react';
+import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon, Loader2, RotateCcw, History, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useRecommendationStore, RecommendedPlace } from '@/store/useRecommendationStore';
 import { useChatStore, Message } from '@/store/useChatStore';
 
 export default function TripAIChat() {
   const [input, setInput] = useState("");
-  const { messages, currentItinerary, isLoading, sendMessage } = useChatStore();
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const { messages, currentItinerary, currentCourseName, isLoading, sendMessage, clearChat, pastSessions, loadSession, deleteSession } = useChatStore();
   const router = useRouter();
   const setRecommendations = useRecommendationStore((state) => state.setRecommendations);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -35,6 +36,67 @@ export default function TripAIChat() {
       <div className="absolute top-20 right-[-10%] w-64 h-64 bg-brand-red/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-40 left-[-10%] w-80 h-80 bg-teal-500/5 rounded-full blur-3xl pointer-events-none" />
 
+      {/* History Drawer */}
+      <AnimatePresence>
+        {isHistoryOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsHistoryOpen(false)}
+              className="absolute inset-0 bg-black/40 z-40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute top-0 right-0 h-full w-[80%] max-w-[320px] bg-white dark:bg-gray-950 z-50 shadow-2xl flex flex-col"
+            >
+              <div className="p-5 border-b border-gray-100 dark:border-gray-900 flex items-center justify-between">
+                <h2 className="text-[16px] font-black flex items-center gap-2 text-gray-900 dark:text-white">
+                  <History size={18} className="text-brand-red" />
+                  지난 대화 기록
+                </h2>
+                <button onClick={() => setIsHistoryOpen(false)} className="text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                {pastSessions.length === 0 ? (
+                  <div className="text-center text-gray-400 text-[13px] py-10">
+                    저장된 대화 기록이 없습니다.
+                  </div>
+                ) : (
+                  pastSessions.map((session) => (
+                    <div key={session.id} className="p-3 bg-gray-50 dark:bg-gray-900 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border border-transparent dark:border-gray-800" onClick={() => {
+                      loadSession(session.id);
+                      setIsHistoryOpen(false);
+                    }}>
+                      <div className="flex-1 overflow-hidden pr-3">
+                        <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">{session.title}</p>
+                        <p className="text-[11px] text-gray-500 mt-0.5">{new Date(session.date).toLocaleDateString()}</p>
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSession(session.id);
+                        }}
+                        className="text-gray-400 hover:text-red-500 p-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                        title="기록 삭제"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="pt-4 pb-4 px-5 bg-white dark:bg-gray-950 sticky top-0 z-10 border-b border-gray-50 dark:border-gray-900 flex items-center justify-between transition-colors">
         <button onClick={() => router.back()} className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
@@ -44,9 +106,14 @@ export default function TripAIChat() {
           <Music4 size={20} className="text-brand-red" />
           <span>AI 플레이리스터</span>
         </h1>
-        <button className="text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-          <Info size={20} />
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setIsHistoryOpen(true)} className="text-gray-400 hover:text-brand-red dark:hover:text-brand-red transition-colors" title="대화 기록">
+            <History size={20} />
+          </button>
+          <button onClick={clearChat} className="text-gray-400 hover:text-brand-red dark:hover:text-brand-red transition-colors" title="대화내용 초기화">
+            <RotateCcw size={20} />
+          </button>
+        </div>
       </div>
 
       {/* Chat Area */}
@@ -97,7 +164,7 @@ export default function TripAIChat() {
                 <Headphones size={12} className="text-brand-red" />
               </div>
               <span className="text-[10px] font-black text-brand-red tracking-widest uppercase animate-pulse">
-                TRIPLY가 최적의 경로를 분석 중입니다...
+                TRIPLY가 여행지를 분석 중입니다...
               </span>
             </div>
 
@@ -138,7 +205,10 @@ export default function TripAIChat() {
             >
               <button
                 onClick={() => {
-                  setRecommendations(currentItinerary);
+                  const firstUserMsg = messages.find(m => m.role === 'user')?.content || 'AI 추천 여행 코스';
+                  const defaultTitle = firstUserMsg.length > 15 ? firstUserMsg.slice(0, 15) + '...' : firstUserMsg;
+                  const title = currentCourseName || defaultTitle;
+                  setRecommendations(currentItinerary, title);
                   router.push('/map');
                 }}
                 className="px-6 py-3.5 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-full shadow-lg flex items-center justify-center gap-2 font-black text-[14px] hover:scale-[1.02] active:scale-[0.98] transition-all"

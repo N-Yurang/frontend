@@ -20,21 +20,43 @@ const MapClient = dynamic(() => import('@/components/map/MapClient'), {
   loading: () => <div className="h-[280px] w-full bg-gray-100 animate-pulse rounded-3xl flex items-center justify-center text-gray-400">지도 로딩 중...</div>
 });
 
+const DB_PLACE_TAGS: Record<string, string[]> = {
+  "청령포": ["고즈넉한", "조용한", "혼자", "역사탐방", "걷기좋은"],
+  "백제문화단지": ["활기찬", "웅장한", "아이와함께", "역사탐방", "야경명소"],
+  "남열해돋이해수욕장": ["활기찬", "낭만적인", "친구와", "바다뷰", "사진맛집"],
+  "젊은달와이파크": ["활기찬", "감성적인", "친구와", "사진맛집", "이색체험"],
+  "별마로천문대": ["감성적인", "낭만적인", "커플", "야경명소", "사진맛집"],
+  "요선암 돌개구멍": ["신비로운", "조용한", "아이와함께", "자연경관", "사진맛집"],
+  "쑥섬 (애도)": ["감성적인", "조용한", "부모님과", "바다뷰", "자연경관"],
+  "연홍도": ["감성적인", "고즈넉한", "혼자", "사진맛집", "걷기좋은"],
+  "낙화암 (부소산성)": ["고즈넉한", "웅장한", "부모님과", "역사탐방", "자연경관"],
+  "무량사": ["조용한", "고즈넉한", "혼자", "역사탐방", "걷기좋은"],
+  "모운동 벽화마을": ["감성적인", "조용한", "친구와", "걷기좋은", "사진맛집"],
+  "나로도 편백숲": ["조용한", "신비로운", "부모님과", "자연경관", "걷기좋은"],
+  "반교리 돌담길": ["고즈넉한", "감성적인", "커플", "걷기좋은", "사진맛집"],
+  "고흥 우주발사전망대 해안길": ["웅장한", "낭만적인", "커플", "바다뷰", "노을맛집"]
+};
+
 export default function CourseMap() {
   const [selectedPlaceId, setSelectedPlaceId] = useState<number | null>(null);
+  const [resetTrigger, setResetTrigger] = useState(0);
   const recommendations = useRecommendationStore((state) => state.recommendations);
+  const tripTitle = useRecommendationStore((state) => state.tripTitle);
 
   // 스토어 데이터를 컴포넌트 형식에 맞게 변환
   const ITINERARY = recommendations.length > 0 
-    ? recommendations.map(p => ({
-        id: p.order,
-        name: p.name,
-        desc: p.type || "AI 추천 장소",
-        duration: p.duration || "예정",
-        lat: p.lat,
-        lng: p.lng,
-        tags: p.type ? [p.type] : []
-      }))
+    ? recommendations.map(p => {
+        const dbTags = DB_PLACE_TAGS[p.name];
+        return {
+          id: p.order,
+          name: p.name,
+          desc: p.type || "AI 추천 장소",
+          duration: p.duration || "예정",
+          lat: p.lat,
+          lng: p.lng,
+          tags: dbTags && dbTags.length > 0 ? dbTags : (p.tags && p.tags.length > 0 ? p.tags : (p.type ? [p.type] : []))
+        };
+      })
     : [
         { 
           id: 1, 
@@ -84,14 +106,14 @@ export default function CourseMap() {
             animate={{ opacity: 1, scale: 1 }}
             className="rounded-[2.5rem] overflow-hidden shadow-2xl shadow-brand-red/20 border border-gray-100 dark:border-gray-800"
           >
-            <MapClient itinerary={ITINERARY} selectedPlaceId={selectedPlaceId} />
+            <MapClient itinerary={ITINERARY} selectedPlaceId={selectedPlaceId} resetTrigger={resetTrigger} />
           </motion.div>
         </div>
 
         <section className="mb-8 relative group">
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100 mb-1">
-              {recommendations.length > 0 ? "AI 추천 여행 코스" : "부여 감성 당일치기"}
+              {recommendations.length > 0 ? tripTitle : "부여 감성 당일치기"}
             </h2>
             <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
               <div className="flex items-center gap-1 text-brand-red">
@@ -112,8 +134,12 @@ export default function CourseMap() {
             <div className="flex items-center gap-4">
               <button className="text-gray-400 hover:text-brand-red transition-colors"><Shuffle size={18} /></button>
               <button 
-                onClick={() => setSelectedPlaceId(null)}
+                onClick={() => {
+                  setSelectedPlaceId(null);
+                  setResetTrigger(prev => prev + 1);
+                }}
                 className="w-8 h-8 bg-brand-red text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-red/30"
+                title="전체 코스 보기"
               >
                 <Play size={14} fill="currentColor" />
               </button>

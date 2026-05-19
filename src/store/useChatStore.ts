@@ -8,15 +8,29 @@ export interface Message {
   content: string;
 }
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  date: string;
+  messages: Message[];
+  itinerary: RecommendedPlace[] | null;
+  courseName: string | null;
+}
+
 interface ChatState {
   messages: Message[];
   currentItinerary: RecommendedPlace[] | null;
+  currentCourseName: string | null;
   isLoading: boolean;
+  pastSessions: ChatSession[];
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   setCurrentItinerary: (itinerary: RecommendedPlace[] | null) => void;
+  setCurrentCourseName: (name: string | null) => void;
   setIsLoading: (loading: boolean) => void;
   sendMessage: (input: string) => Promise<void>;
   clearChat: () => void;
+  loadSession: (sessionId: string) => void;
+  deleteSession: (sessionId: string) => void;
 }
 
 const initialMessages: Message[] = [
@@ -32,12 +46,15 @@ export const useChatStore = create<ChatState>()(
     (set, get) => ({
       messages: initialMessages,
       currentItinerary: null,
+      currentCourseName: null,
       isLoading: false,
+      pastSessions: [],
       setMessages: (updater) =>
         set((state) => ({
           messages: typeof updater === 'function' ? updater(state.messages) : updater,
         })),
       setCurrentItinerary: (itinerary) => set({ currentItinerary: itinerary }),
+      setCurrentCourseName: (name) => set({ currentCourseName: name }),
       setIsLoading: (loading) => set({ isLoading: loading }),
       sendMessage: async (input: string) => {
         if (!input.trim() || get().isLoading) return;
@@ -92,6 +109,10 @@ export const useChatStore = create<ChatState>()(
             if (data.itinerary && Array.isArray(data.itinerary) && data.itinerary.length > 0) {
               set({ currentItinerary: data.itinerary });
             }
+
+            if (data.course_name) {
+              set({ currentCourseName: data.course_name });
+            }
           }
         } catch (error) {
           console.error("AI 연결 실패:", error);
@@ -105,7 +126,47 @@ export const useChatStore = create<ChatState>()(
           set({ isLoading: false });
         }
       },
-      clearChat: () => set({ messages: initialMessages, currentItinerary: null, isLoading: false }),
+      clearChat: () => {
+        const { messages, currentItinerary, currentCourseName, pastSessions } = get();
+        if (messages.length > 1) {
+          const firstUserMsg = messages.find(m => m.role === 'user')?.content || '새로운 대화';
+          const title = currentCourseName || (firstUserMsg.length > 15 ? firstUserMsg.slice(0, 15) + '...' : firstUserMsg);
+          
+          const newSession: ChatSession = {
+            id: Date.now().toString(),
+            title,
+            date: new Date().toISOString(),
+            messages: [...messages],
+            itinerary: currentItinerary ? [...currentItinerary] : null,
+            courseName: currentCourseName,
+          };
+          set({ 
+            pastSessions: [newSession, ...pastSessions],
+            messages: initialMessages, 
+            currentItinerary: null, 
+            currentCourseName: null,
+            isLoading: false 
+          });
+        } else {
+          set({ messages: initialMessages, currentItinerary: null, currentCourseName: null, isLoading: false });
+        }
+      },
+      loadSession: (sessionId: string) => {
+        const session = get().pastSessions.find(s => s.id === sessionId);
+        if (session) {
+          set({ 
+            messages: session.messages, 
+            currentItinerary: session.itinerary,
+            currentCourseName: session.courseName || null,
+            isLoading: false
+          });
+        }
+      },
+      deleteSession: (sessionId: string) => {
+        set((state) => ({
+          pastSessions: state.pastSessions.filter(s => s.id !== sessionId)
+        }));
+      },
     }),
     {
       name: 'chat-storage',

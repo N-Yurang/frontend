@@ -21,9 +21,10 @@ interface Place {
 interface MapClientProps {
   itinerary: Place[];
   selectedPlaceId?: number | null;
+  resetTrigger?: number;
 }
 
-export default function MapClient({ itinerary, selectedPlaceId }: MapClientProps) {
+export default function MapClient({ itinerary, selectedPlaceId, resetTrigger }: MapClientProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [map, setMap] = useState<any>(null);
   const [hoveredId, setHoveredId] = useState<number | null>(null);
@@ -39,8 +40,9 @@ export default function MapClient({ itinerary, selectedPlaceId }: MapClientProps
       bounds.extend(new window.kakao.maps.LatLng(place.lat, place.lng));
     });
 
-    map.setBounds(bounds);
-  }, [map, itinerary, selectedPlaceId]);
+    // 지도 가장자리에 핀이 잘리지 않도록 상하좌우 여백(padding) 추가
+    map.setBounds(bounds, 64, 32, 32, 32);
+  }, [map, itinerary, selectedPlaceId, resetTrigger]);
 
   // 선택된 장소로 지도 이동 및 확대
   useEffect(() => {
