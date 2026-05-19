@@ -10,6 +10,7 @@ export interface RecommendedPlace {
   desc?: string;
   duration?: string;
   tags?: string[];
+  memo?: string;
 }
 
 interface RecommendationState {
