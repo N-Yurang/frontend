@@ -11,7 +11,7 @@ declare global {
 }
 
 interface Place {
-  id: number;
+  id: string | number;
   name: string;
   lat: number;
   lng: number;
@@ -20,14 +20,14 @@ interface Place {
 
 interface MapClientProps {
   itinerary: Place[];
-  selectedPlaceId?: number | null;
+  selectedPlaceId?: string | number | null;
   resetTrigger?: number;
 }
 
 export default function MapClient({ itinerary, selectedPlaceId, resetTrigger }: MapClientProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [map, setMap] = useState<any>(null);
-  const [hoveredId, setHoveredId] = useState<number | null>(null);
+  const [hoveredId, setHoveredId] = useState<string | number | null>(null);
 
   // 자동 범위 조절 (Auto Bounds)
   useEffect(() => {
