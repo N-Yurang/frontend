@@ -6,6 +6,7 @@ import { Search, MapPin, Calendar, Flame, Compass, Mic, Play, MoreHorizontal, In
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationSheet from "@/components/ui/NotificationSheet";
+import { useSavedStore } from "@/store/useSavedStore";
 
 const SEARCH_PLACEHOLDERS = [
   "어디로 떠나볼까요? (예: 영월)",
@@ -94,20 +95,9 @@ export default function Home() {
   const [trendingPlaces, setTrendingPlaces] = useState<Place[]>([]);
   const [hiddenPlaces, setHiddenPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [likedItems, setLikedItems] = useState<Set<string>>(new Set());
 
-  const toggleLike = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setLikedItems((prev) => {
-      const newLiked = new Set(prev);
-      if (newLiked.has(id)) {
-        newLiked.delete(id);
-      } else {
-        newLiked.add(id);
-      }
-      return newLiked;
-    });
-  };
+  const toggleItem = useSavedStore((state) => state.toggleItem);
+  const isSaved = useSavedStore((state) => state.isSaved);
 
   useEffect(() => {
     const container = sliderContainerRef.current;
@@ -301,12 +291,21 @@ export default function Home() {
                         
                         {/* Like Button */}
                         <button
-                          onClick={(e) => toggleLike(e, `place-${item.place_id}`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleItem({
+                              id: `place-${item.place_id}`,
+                              type: 'place',
+                              name: item.name || item.location,
+                              location: item.location,
+                              image_url: item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`
+                            });
+                          }}
                           className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-white/40 active:scale-95"
                         >
                           <Heart
                             size={20}
-                            className={`transition-colors ${likedItems.has(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                            className={`transition-colors ${isSaved(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
                           />
                         </button>
 
@@ -389,12 +388,21 @@ export default function Home() {
                       
                       {/* Like Button */}
                       <button
-                        onClick={(e) => toggleLike(e, `place-${item.place_id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleItem({
+                            id: `place-${item.place_id}`,
+                            type: 'place',
+                            name: item.name,
+                            location: item.location,
+                            image_url: item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`
+                          });
+                        }}
                         className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
                       >
                         <Heart
                           size={16}
-                          className={`transition-colors ${likedItems.has(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                          className={`transition-colors ${isSaved(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
                         />
                       </button>
 
@@ -474,12 +482,21 @@ export default function Home() {
 
                       {/* Like Button */}
                       <button
-                        onClick={(e) => toggleLike(e, `festival-${item.festival_id || item.id}`)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleItem({
+                            id: `festival-${item.festival_id || item.id}`,
+                            type: 'festival',
+                            name: title || "",
+                            dateStr: dateStr,
+                            image_url: imageUrl || ""
+                          });
+                        }}
                         className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
                       >
                         <Heart
                           size={16}
-                          className={`transition-colors ${likedItems.has(`festival-${item.festival_id || item.id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                          className={`transition-colors ${isSaved(`festival-${item.festival_id || item.id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
                         />
                       </button>
 

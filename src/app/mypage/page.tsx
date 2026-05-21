@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Edit2, ChevronRight, CheckCircle2, Heart, Plus, FileText, HelpCircle, LogOut, Bell, Monitor, ChevronLeft } from "lucide-react";
+import { Settings, Edit2, ChevronRight, CheckCircle2, Heart, Plus, FileText, HelpCircle, LogOut, Bell, Monitor, ChevronLeft, MapPin } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useSavedStore } from "@/store/useSavedStore";
 
 export default function MyPage() {
   const [view, setView] = useState<'main' | 'settings'>('main');
@@ -10,6 +11,9 @@ export default function MyPage() {
   const [userTitle, setUserTitle] = useState("강릉 감성 여행자");
   const [tags, setTags] = useState<string[]>(["드라마 촬영지", "맛집 탐방", "카페 투어", "SNS 인기 명소", "바다·해변"]);
   const { theme, setTheme } = useTheme();
+
+  const savedItems = useSavedStore((state) => state.savedItems);
+  const savedPlaces = savedItems.filter((i) => i.type === 'place');
 
   // Mock Playlists
   const playlists = [
@@ -142,7 +146,7 @@ export default function MyPage() {
             </div>
             <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
             <div className="flex flex-col items-center">
-              <span className="text-[20px] font-bold text-gray-900 dark:text-white leading-tight">38</span>
+              <span className="text-[20px] font-bold text-gray-900 dark:text-white leading-tight">{savedPlaces.length}</span>
               <span className="text-[11px] text-gray-400 mt-0.5">찜한 장소</span>
             </div>
             <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
@@ -216,6 +220,38 @@ export default function MyPage() {
               </div>
             ))}
           </div>
+        </div>
+
+        {/* Saved Places */}
+        <div className="bg-white dark:bg-gray-900 rounded-[24px] p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-[16px] font-bold text-gray-900 dark:text-white">찜한 장소</h3>
+            <button className="text-[13px] font-medium text-[#FF4B4B] flex items-center">
+              전체보기 <ChevronRight size={14} />
+            </button>
+          </div>
+
+          {savedPlaces.length > 0 ? (
+            <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-2">
+              {savedPlaces.map(place => (
+                <div key={place.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
+                  <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative">
+                    <img src={place.image_url} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
+                  </div>
+                  <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{place.name}</h4>
+                  {place.location && (
+                    <p className="text-[11px] text-gray-400 truncate flex items-center gap-0.5 mt-0.5">
+                      <MapPin size={10} className="text-[#FF4B4B]" /> {place.location}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6">
+              <p className="text-[13px] text-gray-400">아직 찜한 장소가 없어요.</p>
+            </div>
+          )}
         </div>
 
         {/* Menus */}
