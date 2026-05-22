@@ -64,7 +64,7 @@ export const useChatStore = create<ChatState>()(
           role: "user",
           content: input,
         };
-        
+
         get().setMessages((prev) => [...prev, userMsg]);
         set({ isLoading: true });
 
@@ -131,7 +131,7 @@ export const useChatStore = create<ChatState>()(
         if (messages.length > 1) {
           const firstUserMsg = messages.find(m => m.role === 'user')?.content || '새로운 대화';
           const title = currentCourseName || (firstUserMsg.length > 15 ? firstUserMsg.slice(0, 15) + '...' : firstUserMsg);
-          
+
           const newSession: ChatSession = {
             id: Date.now().toString(),
             title,
@@ -140,12 +140,12 @@ export const useChatStore = create<ChatState>()(
             itinerary: currentItinerary ? [...currentItinerary] : null,
             courseName: currentCourseName,
           };
-          set({ 
+          set({
             pastSessions: [newSession, ...pastSessions],
-            messages: initialMessages, 
-            currentItinerary: null, 
+            messages: initialMessages,
+            currentItinerary: null,
             currentCourseName: null,
-            isLoading: false 
+            isLoading: false
           });
         } else {
           set({ messages: initialMessages, currentItinerary: null, currentCourseName: null, isLoading: false });
@@ -154,8 +154,8 @@ export const useChatStore = create<ChatState>()(
       loadSession: (sessionId: string) => {
         const session = get().pastSessions.find(s => s.id === sessionId);
         if (session) {
-          set({ 
-            messages: session.messages, 
+          set({
+            messages: session.messages,
             currentItinerary: session.itinerary,
             currentCourseName: session.courseName || null,
             isLoading: false

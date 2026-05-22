@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react";
 import dynamic from 'next/dynamic';
-import { 
-  Music, 
-  Play, 
-  Shuffle, 
-  MapPin, 
-  Share2, 
+import {
+  Music,
+  Play,
+  Shuffle,
+  MapPin,
+  Share2,
   ChevronLeft,
   GripVertical,
   Edit3,
@@ -15,37 +15,35 @@ import {
 } from 'lucide-react';
 import { motion, Reorder, useDragControls } from 'framer-motion';
 import { useRecommendationStore, RecommendedPlace } from "@/store/useRecommendationStore";
+import { normalizeTags } from "@/utils/tagGrouper";
 
 // dynamically import leaflet component with ssr: false
-const MapClient = dynamic(() => import('@/components/map/MapClient'), { 
+const MapClient = dynamic(() => import('@/components/map/MapClient'), {
   ssr: false,
   loading: () => <div className="h-[280px] w-full bg-gray-100 animate-pulse rounded-3xl flex items-center justify-center text-gray-400">지도 로딩 중...</div>
 });
 
+// 실제 DB 태그 (이미 통합 카테고리 형태로 저장됨)
 const DB_PLACE_TAGS: Record<string, string[]> = {
-  "청령포": ["고즈넉한", "조용한", "혼자", "역사탐방", "걷기좋은"],
-  "백제문화단지": ["활기찬", "웅장한", "아이와함께", "역사탐방", "야경명소"],
-  "남열해돋이해수욕장": ["활기찬", "낭만적인", "친구와", "바다뷰", "사진맛집"],
-  "젊은달와이파크": ["활기찬", "감성적인", "친구와", "사진맛집", "이색체험"],
-  "별마로천문대": ["감성적인", "낭만적인", "커플", "야경명소", "사진맛집"],
-  "요선암 돌개구멍": ["신비로운", "조용한", "아이와함께", "자연경관", "사진맛집"],
-  "쑥섬 (애도)": ["감성적인", "조용한", "부모님과", "바다뷰", "자연경관"],
-  "연홍도": ["감성적인", "고즈넉한", "혼자", "사진맛집", "걷기좋은"],
-  "낙화암 (부소산성)": ["고즈넉한", "웅장한", "부모님과", "역사탐방", "자연경관"],
-  "무량사": ["조용한", "고즈넉한", "혼자", "역사탐방", "걷기좋은"],
-  "모운동 벽화마을": ["감성적인", "조용한", "친구와", "걷기좋은", "사진맛집"],
-  "나로도 편백숲": ["조용한", "신비로운", "부모님과", "자연경관", "걷기좋은"],
-  "반교리 돌담길": ["고즈넉한", "감성적인", "커플", "걷기좋은", "사진맛집"],
-  "고흥 우주발사전망대 해안길": ["웅장한", "낭만적인", "커플", "바다뷰", "노을맛집"]
+  "청령포": ["여유/힐링", "혼자", "역사/건축", "걷기/산책"],
+  "백제문화단지": ["활기찬", "풍경/경관", "가족과함께", "역사/건축", "야경/노을"],
+  "남열해돋이해수욕장": ["활기찬", "감성/낭만", "친구와", "오션뷰", "사진명소"],
+  "젊은달와이파크": ["활기찬", "감성/낭만", "친구와", "사진명소", "이색/액티비티"],
+  "별마로천문대": ["감성/낭만", "커플", "야경/노을", "사진명소"],
+  "쑥섬 (애도)": ["감성/낭만", "여유/힐링", "가족과함께", "오션뷰", "풍경/경관"],
+  "연홍도": ["감성/낭만", "여유/힐링", "혼자", "사진명소", "걷기/산책"],
+  "무량사": ["여유/힐링", "혼자", "역사/건축", "걷기/산책"],
+  "나로도 편백숲": ["여유/힐링", "풍경/경관", "가족과함께", "걷기/산책"],
+  "반교리 돌담길": ["여유/힐링", "감성/낭만", "커플", "걷기/산책", "사진명소"],
 };
 
 // CourseItem Component to handle drag controls and memo edit
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function CourseItem({ 
-  place, 
-  index, 
-  selectedPlaceId, 
-  setSelectedPlaceId, 
+function CourseItem({
+  place,
+  index,
+  selectedPlaceId,
+  setSelectedPlaceId,
   saveMemoToState
 }: any) {
   const controls = useDragControls();
@@ -69,13 +67,12 @@ function CourseItem({
       id={String(place.id)}
       dragListener={false}
       dragControls={controls}
-      className={`relative rounded-3xl transition-all mb-3 overflow-hidden ${
-        selectedPlaceId === place.id 
-          ? "bg-brand-red/5 dark:bg-brand-red/10 ring-1 ring-brand-red/20" 
+      className={`relative rounded-3xl transition-all mb-3 overflow-hidden ${selectedPlaceId === place.id
+          ? "bg-brand-red/5 dark:bg-brand-red/10 ring-1 ring-brand-red/20"
           : "bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
-      }`}
+        }`}
     >
-      <div 
+      <div
         className="flex items-start gap-3 p-4 cursor-pointer"
         onClick={(e) => {
           // Prevent selecting when clicking input/buttons
@@ -88,13 +85,13 @@ function CourseItem({
             {index + 1}
           </div>
           {selectedPlaceId === place.id && (
-            <motion.div 
+            <motion.div
               layoutId="active-indicator"
               className="absolute -left-1.5 top-1/4 w-1 h-1/2 bg-brand-red rounded-full"
             />
           )}
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between">
             <div className="min-w-0 pr-2">
@@ -105,10 +102,10 @@ function CourseItem({
               {place.duration}
             </span>
           </div>
-          
+
           {place.tags && place.tags.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mt-2">
-              {place.tags.map((tag: string, idx: number) => (
+              {normalizeTags(place.tags).map((tag: string, idx: number) => (
                 <span key={idx} className="inline-flex items-center rounded-full bg-brand-red/10 text-brand-red px-2 py-0.5 text-[10px] font-bold">
                   #{tag}
                 </span>
@@ -133,23 +130,23 @@ function CourseItem({
             ) : (
               <div className="flex items-start gap-2 group/memo min-h-[24px]">
                 {place.memo ? (
-                  <p 
+                  <p
                     className="text-[12px] text-gray-500 dark:text-gray-400 font-medium leading-snug flex-1 cursor-text"
                     onClick={() => setIsEditingMemo(true)}
                   >
                     {place.memo}
                   </p>
                 ) : (
-                  <p 
-                    className="text-[12px] text-gray-300 dark:text-gray-600 font-medium flex-1 cursor-text flex items-center gap-1 opacity-0 group-hover/memo:opacity-100 transition-opacity" 
+                  <p
+                    className="text-[12px] text-gray-300 dark:text-gray-600 font-medium flex-1 cursor-text flex items-center gap-1 opacity-0 group-hover/memo:opacity-100 transition-opacity"
                     onClick={() => setIsEditingMemo(true)}
                   >
                     <Edit3 size={12} /> 메모 추가
                   </p>
                 )}
                 {place.memo && (
-                  <button 
-                    onClick={() => setIsEditingMemo(true)} 
+                  <button
+                    onClick={() => setIsEditingMemo(true)}
                     className="text-gray-300 hover:text-brand-red transition-colors opacity-0 group-hover/memo:opacity-100"
                   >
                     <Edit3 size={14} />
@@ -161,7 +158,7 @@ function CourseItem({
         </div>
 
         {/* Drag Handle */}
-        <div 
+        <div
           className="flex flex-col items-center justify-center pt-2 cursor-grab active:cursor-grabbing text-gray-300 hover:text-gray-500 transition-colors ml-1"
           onPointerDown={(e) => controls.start(e)}
         >
@@ -175,7 +172,7 @@ function CourseItem({
 export default function CourseMap() {
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | number | null>(null);
   const [resetTrigger, setResetTrigger] = useState(0);
-  
+
   const recommendations = useRecommendationStore((state) => state.recommendations);
   const setRecommendations = useRecommendationStore((state) => state.setRecommendations);
   const tripTitle = useRecommendationStore((state) => state.tripTitle);
@@ -200,34 +197,34 @@ export default function CourseMap() {
       }));
     } else {
       setPlaces([
-        { 
-          id: "place-1", 
-          name: "성흥산성 사랑나무", 
+        {
+          id: "place-1",
+          name: "성흥산성 사랑나무",
           desc: "인생샷 명소로 유명한 탁 트인 언덕",
           duration: "1h 30m",
           lat: 36.1950,
           lng: 126.9038,
-          tags: ["인스타핫플", "숨은명소"],
+          tags: ["사진맛집", "커플", "자연경관"],
           memo: ""
         },
-        { 
-          id: "place-2", 
-          name: "부여 중앙시장", 
+        {
+          id: "place-2",
+          name: "부여 중앙시장",
           desc: "점심 식사 및 현지 간식 탐방",
           duration: "1h 00m",
           lat: 36.2798,
           lng: 126.9140,
-          tags: ["축제중"],
+          tags: ["활기찬", "걷기좋은", "친구와"],
           memo: ""
         },
-        { 
-          id: "place-3", 
-          name: "궁남지 야경", 
+        {
+          id: "place-3",
+          name: "궁남지 야경",
           desc: "은은한 조명이 예쁜 산책로 마무~리",
           duration: "45m",
           lat: 36.2748,
           lng: 126.9142,
-          tags: ["숨은명소"],
+          tags: ["야경명소", "낭만적인", "걷기좋은"],
           memo: "야경 사진 꼭 찍기!"
         },
       ]);
@@ -257,11 +254,22 @@ export default function CourseMap() {
   };
 
   const saveMemoToState = (placeId: string | number, newMemo: string) => {
-    const newPlaces = places.map(p => 
+    const newPlaces = places.map(p =>
       p.id === placeId ? { ...p, memo: newMemo } : p
     );
     setPlaces(newPlaces);
     saveToStore(newPlaces);
+  };
+
+  const handleShuffle = () => {
+    if (places.length <= 1) return;
+    const shuffled = [...places];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    setPlaces(shuffled);
+    saveToStore(shuffled);
   };
 
   return (
@@ -278,7 +286,7 @@ export default function CourseMap() {
 
       <main className="flex-1 px-5">
         <div className="sticky top-0 z-20 pt-2 pb-6 bg-[#F8F9FA] dark:bg-gray-950 -mx-5 px-5">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="rounded-[2.5rem] overflow-hidden shadow-xl shadow-brand-red/10 border border-white dark:border-gray-800"
@@ -313,8 +321,14 @@ export default function CourseMap() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Track List</h3>
             <div className="flex items-center gap-4">
-              <button className="text-gray-400 hover:text-brand-red transition-colors"><Shuffle size={18} /></button>
-              <button 
+              <button
+                onClick={handleShuffle}
+                className="text-gray-400 hover:text-brand-red transition-colors active:scale-95"
+                title="코스 순서 셔플"
+              >
+                <Shuffle size={18} />
+              </button>
+              <button
                 onClick={() => {
                   setSelectedPlaceId(null);
                   setResetTrigger(prev => prev + 1);
@@ -327,14 +341,14 @@ export default function CourseMap() {
             </div>
           </div>
 
-          <Reorder.Group 
-            axis="y" 
-            values={places} 
+          <Reorder.Group
+            axis="y"
+            values={places}
             onReorder={handleReorder}
             className="space-y-3"
           >
             {places.map((place, index) => (
-              <CourseItem 
+              <CourseItem
                 key={place.id}
                 place={place}
                 index={index}

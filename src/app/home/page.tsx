@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, MapPin, Calendar, Flame, Compass, Play, MoreHorizontal, Info, Heart, Bell } from "lucide-react";
+import { Search, MapPin, Calendar, Flame, Compass, Play, MoreHorizontal, Info, Heart, Bell, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -90,14 +90,43 @@ export default function Home() {
     setTouchEnd(0);
   };
 
-  const currentMonth = new Date().getMonth() + 1;
+  const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [trendingPlaces, setTrendingPlaces] = useState<Place[]>([]);
   const [hiddenPlaces, setHiddenPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isFestivalLoading, setIsFestivalLoading] = useState(true);
 
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const isSaved = useSavedStore((state) => state.isSaved);
+
+  const getFestivalDescription = (month: number) => {
+    if (month >= 3 && month <= 5) {
+      return "봄바람과 함께 설레는 봄 축제들";
+    } else if (month >= 6 && month <= 8) {
+      return "뜨거운 여름날 시원하게 즐기는 축제들";
+    } else if (month >= 9 && month <= 11) {
+      return "낭만 가득한 가을바람과 함께하는 축제들";
+    } else {
+      return "하얀 눈꽃과 함께 따뜻함을 채워줄 축제들";
+    }
+  };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsMonthDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const container = sliderContainerRef.current;
@@ -141,23 +170,36 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch trends and hidden places once on mount
   useEffect(() => {
     setIsLoading(true);
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/festivals?month=${currentMonth}`).then(res => res.json()),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
     ])
-      .then(([festivalsData, trendsData, hiddenData]) => {
-        if (festivalsData && festivalsData.status === "success") setFestivals(festivalsData.data.festivals);
+      .then(([trendsData, hiddenData]) => {
         if (trendsData && trendsData.status === "success") setTrendingPlaces(trendsData.data.places);
         if (hiddenData && hiddenData.status === "success") setHiddenPlaces(hiddenData.data.places);
       })
+      .catch(console.error);
+  }, []);
+
+  // Fetch festivals dynamically based on selectedMonth and selectedYear
+  useEffect(() => {
+    setIsFestivalLoading(true);
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/festivals?year=${selectedYear}&month=${selectedMonth}`)
+      .then(res => res.json())
+      .then((festivalsData) => {
+        if (festivalsData && festivalsData.status === "success") {
+          setFestivals(festivalsData.data.festivals);
+        }
+      })
       .catch(console.error)
       .finally(() => {
+        setIsFestivalLoading(false);
         setIsLoading(false);
       });
-  }, [currentMonth]);
+  }, [selectedYear, selectedMonth]);
 
   // 2초마다 미디어 속 여행지 자동 슬라이드
   useEffect(() => {
@@ -319,7 +361,7 @@ export default function Home() {
                               {item.media_source}
                             </span>
                             <h3 className="font-black text-xl leading-tight whitespace-pre-line group-hover:text-brand-red transition-colors">
-                              {item.location}
+                              {item.name}
                             </h3>
                           </div>
                         </div>
@@ -434,24 +476,60 @@ export default function Home() {
                 <Calendar className="w-5 h-5 text-brand-red" />
                 <span>이달의 축제</span>
               </h2>
-              <p className="text-xs text-gray-500 font-medium">다가오는 봄바람과 함께 즐기는 축제들</p>
+              <p className="text-xs text-gray-500 font-medium transition-all duration-300">
+                {getFestivalDescription(selectedMonth)}
+              </p>
             </div>
-            <button className="text-xs font-bold text-brand-red">
-              {festivals.length > 0 && (festivals[0].start_date || festivals[0].date) ? (
-                (() => {
-                  const d = new Date((festivals[0].start_date || festivals[0].date) as string);
-                  return !isNaN(d.getTime()) 
-                    ? `${String(d.getMonth() + 1).padStart(2, '0')} / ${new Date().getFullYear()}`
-                    : `${String(currentMonth).padStart(2, '0')} / ${new Date().getFullYear()}`;
-                })()
-              ) : (
-                `${String(currentMonth).padStart(2, '0')} / ${new Date().getFullYear()}`
-              )}
-            </button>
+            <div className="relative" ref={dropdownRef}>
+              <button 
+                onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-red/10 text-brand-red rounded-full text-xs font-bold transition-all hover:bg-brand-red/20 active:scale-95 border border-brand-red/20 shadow-sm"
+              >
+                <span>{String(selectedMonth).padStart(2, '0')} / {selectedYear}</span>
+                <ChevronDown size={14} className={`transition-transform duration-300 ${isMonthDropdownOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              <AnimatePresence>
+                {isMonthDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 mt-2 w-48 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-2xl shadow-xl border border-gray-100 dark:border-gray-800 z-50 overflow-hidden py-2.5"
+                  >
+                    <div className="px-3 pb-2 text-[10px] font-black text-gray-400 tracking-wider uppercase border-b border-gray-50 dark:border-gray-900 mb-2">
+                      월 선택 ({selectedYear})
+                    </div>
+                    <div className="grid grid-cols-3 gap-1.5 px-2">
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => {
+                        const isSelected = selectedMonth === m;
+                        return (
+                          <button
+                            key={m}
+                            onClick={() => {
+                              setSelectedMonth(m);
+                              setIsMonthDropdownOpen(false);
+                            }}
+                            className={`h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${
+                              isSelected
+                                ? "bg-brand-red text-white shadow-md shadow-brand-red/20"
+                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                            }`}
+                          >
+                            {m}월
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           <div className="flex overflow-x-auto gap-5 pb-4 -mx-5 px-5 scrollbar-hide">
-            {isLoading ? (
+            {isFestivalLoading ? (
               [...Array(3)].map((_, idx) => (
                 <div key={idx} className="min-w-[160px] flex-shrink-0">
                   <div className="h-40 w-full rounded-3xl bg-gray-200 dark:bg-gray-800 animate-pulse mb-3" />
@@ -459,6 +537,18 @@ export default function Home() {
                   <div className="h-3 w-1/2 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
                 </div>
               ))
+            ) : festivals.length === 0 ? (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full py-8 flex flex-col items-center justify-center text-center px-4"
+              >
+                <div className="w-12 h-12 rounded-full bg-gray-50 dark:bg-gray-900 flex items-center justify-center text-gray-400 dark:text-gray-600 mb-3 border border-gray-100 dark:border-gray-800">
+                  <Calendar size={20} className="text-gray-400" />
+                </div>
+                <p className="text-sm font-bold text-gray-800 dark:text-gray-200">선택하신 달에는 등록된 축제가 없어요</p>
+                <p className="text-xs text-gray-400 mt-1">봄과 여름철(3~6월)의 풍성한 축제들을 탐색해보세요!</p>
+              </motion.div>
             ) : (
               festivals.map((item: Festival, idx: number) => {
                 const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`) : item.image;

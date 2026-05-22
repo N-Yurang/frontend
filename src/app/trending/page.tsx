@@ -5,6 +5,7 @@ import { ChevronLeft, Search, Heart, MapPin, Navigation, ChevronRight, Tv } from
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { normalizeTags } from "@/utils/tagGrouper";
 
 interface Place {
   place_id: number;
@@ -105,7 +106,7 @@ export default function TrendingPage() {
               </div>
 
               {/* Heart Button */}
-              <button 
+              <button
                 onClick={(e) => e.preventDefault()}
                 className="absolute top-3 right-3 w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/40 transition-colors"
               >
@@ -123,12 +124,12 @@ export default function TrendingPage() {
               </div>
 
               <div className="mt-2 text-[12px] text-[#B4B2A9]">
-                {place.tags ? place.tags.join(" ") : ""}
+                {place.tags ? normalizeTags(place.tags).map((t: string) => `#${t}`).join("  ") : ""}
               </div>
 
               <div className="w-full h-[1px] bg-[#E8E7E2] my-4" />
 
-              <button 
+              <button
                 onClick={(e) => { e.preventDefault(); router.push('/chat'); }}
                 className="w-full h-11 bg-gradient-to-br from-[#FA5252] to-[#FF8E73] rounded-xl flex items-center justify-center gap-2 text-white font-semibold text-[14px] hover:opacity-90 transition-opacity"
               >

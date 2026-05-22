@@ -78,7 +78,7 @@ export default function TripAIChat() {
                         <p className="text-[14px] font-bold text-gray-900 dark:text-white truncate">{session.title}</p>
                         <p className="text-[11px] text-gray-500 mt-0.5">{new Date(session.date).toLocaleDateString()}</p>
                       </div>
-                      <button 
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           deleteSession(session.id);
