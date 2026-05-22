@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Settings, Edit2, ChevronRight, CheckCircle2, Heart, Plus, FileText, HelpCircle, LogOut, Bell, Monitor, ChevronLeft, MapPin } from "lucide-react";
+import { Settings, Edit2, ChevronRight, CheckCircle2, Plus, FileText, HelpCircle, LogOut, Bell, ChevronLeft, MapPin, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSavedStore } from "@/store/useSavedStore";
 
@@ -9,17 +9,81 @@ export default function MyPage() {
   const [view, setView] = useState<'main' | 'settings'>('main');
   const [userName, setUserName] = useState("어드벤처유한");
   const [userTitle, setUserTitle] = useState("강릉 감성 여행자");
-  const [tags, setTags] = useState<string[]>(["드라마 촬영지", "맛집 탐방", "카페 투어", "SNS 인기 명소", "바다·해변"]);
+  const [tags, setTags] = useState<string[]>([]);
+  const [isEditingTags, setIsEditingTags] = useState(false);
+  const [newTagInput, setNewTagInput] = useState("");
+  const [playlists, setPlaylists] = useState<any[]>([]);
+
   const { theme, setTheme } = useTheme();
 
   const savedItems = useSavedStore((state) => state.savedItems);
   const savedPlaces = savedItems.filter((i) => i.type === 'place');
 
-  // Mock Playlists
-  const playlists = [
-    { id: 1, title: "강릉 감성 코스", spots: 4, hours: 4, images: ["/images/festival_1.jpg", "/images/festival_2.jpg", "/images/festival_3.jpg", "/images/festival_4.jpg"] },
-    { id: 2, title: "강릉 감성 코스", spots: 4, hours: 4, images: ["/images/hidden_201.jpg", "/images/hidden_202.jpg", "/images/hidden_203.jpg", "/images/hidden_204.jpg"] }
-  ];
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem("triply_token");
+        if (!token) return;
+
+        // Fetch User Info
+        const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          setUserName(userData.data.name);
+          if (userData.data.preferences?.travel_tags) {
+            setTags(userData.data.preferences.travel_tags);
+          }
+        }
+
+        // Fetch Saved Courses
+        const courseRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (courseRes.ok) {
+          const courseData = await courseRes.json();
+          setPlaylists(courseData.data.courses);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user data:", err);
+      }
+    };
+    fetchUserData();
+  }, []);
+
+  const handleSaveTags = async () => {
+    try {
+      const token = localStorage.getItem("triply_token");
+      if (!token) return;
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/preferences`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({ travel_tags: tags })
+      });
+
+      if (res.ok) {
+        setIsEditingTags(false);
+      }
+    } catch (err) {
+      console.error("Failed to update tags:", err);
+    }
+  };
+
+  const handleAddTag = () => {
+    if (newTagInput.trim() && !tags.includes(newTagInput.trim())) {
+      setTags([...tags, newTagInput.trim()]);
+      setNewTagInput("");
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
 
   if (view === 'settings') {
     return (
@@ -141,7 +205,7 @@ export default function MyPage() {
           {/* Stats */}
           <div className="flex justify-between items-center px-2">
             <div className="flex flex-col items-center">
-              <span className="text-[20px] font-bold text-gray-900 dark:text-white leading-tight">12</span>
+              <span className="text-[20px] font-bold text-gray-900 dark:text-white leading-tight">{playlists.length}</span>
               <span className="text-[11px] text-gray-400 mt-0.5">저장한 플리</span>
             </div>
             <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
@@ -151,7 +215,7 @@ export default function MyPage() {
             </div>
             <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
             <div className="flex flex-col items-center">
-              <span className="text-[20px] font-bold text-gray-900 dark:text-white leading-tight">3</span>
+              <span className="text-[20px] font-bold text-gray-900 dark:text-white leading-tight">0</span>
               <span className="text-[11px] text-gray-400 mt-0.5">다녀온 코스</span>
             </div>
           </div>
@@ -161,7 +225,11 @@ export default function MyPage() {
         <div className="bg-white dark:bg-gray-900 rounded-[24px] p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-[16px] font-bold text-gray-900 dark:text-white">내 여행 취향</h3>
-            <button className="text-[13px] font-medium text-[#FF4B4B]">수정</button>
+            {isEditingTags ? (
+              <button onClick={handleSaveTags} className="text-[13px] font-medium text-[#FF4B4B]">완료</button>
+            ) : (
+              <button onClick={() => setIsEditingTags(true)} className="text-[13px] font-medium text-[#FF4B4B]">수정</button>
+            )}
           </div>
           
           <div className="flex flex-wrap gap-2">
@@ -169,12 +237,33 @@ export default function MyPage() {
               <div key={tag} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FF4B4B] bg-white dark:bg-gray-900 text-[#FF4B4B]">
                 <CheckCircle2 size={14} className="fill-[#FF4B4B] text-white" />
                 <span className="text-[13px] font-medium">{tag}</span>
+                {isEditingTags && (
+                  <button onClick={() => handleRemoveTag(tag)} className="ml-1 text-[#FF4B4B] hover:text-red-700 transition-colors">
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             ))}
-            <button className="flex items-center gap-1 px-4 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-              <Plus size={14} />
-              <span className="text-[13px] font-medium">추가</span>
-            </button>
+            {isEditingTags ? (
+              <div className="flex items-center gap-2">
+                <input 
+                  type="text" 
+                  value={newTagInput} 
+                  onChange={(e) => setNewTagInput(e.target.value)} 
+                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                  className="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-[13px] outline-none w-28 text-gray-900 dark:text-white"
+                  placeholder="태그 입력"
+                />
+                <button onClick={handleAddTag} className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-[#FF4B4B] bg-[#FF4B4B] text-white transition-colors">
+                  <span className="text-[13px] font-medium">추가</span>
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => setIsEditingTags(true)} className="flex items-center gap-1 px-4 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                <Plus size={14} />
+                <span className="text-[13px] font-medium">추가</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -188,22 +277,16 @@ export default function MyPage() {
           </div>
 
           <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-2">
-            {playlists.map(pl => (
-              <div key={pl.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
-                {/* 4-grid image container */}
-                <div className="w-full aspect-square rounded-2xl overflow-hidden grid grid-cols-2 grid-rows-2 gap-0.5 mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800">
-                  <div className="bg-gray-200 h-full w-full col-span-1 row-span-1">
-                    <img src={pl.images[0] || 'https://images.unsplash.com/photo-1542281286-9e0a16bb7366'} className="w-full h-full object-cover" alt="" />
-                  </div>
-                  <div className="bg-gray-300 h-full w-full col-span-1 row-span-1">
-                    <img src={pl.images[1] || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4'} className="w-full h-full object-cover" alt="" />
-                  </div>
-                  <div className="bg-gray-300 h-full w-full col-span-1 row-span-1">
-                    <img src={pl.images[2] || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'} className="w-full h-full object-cover" alt="" />
-                  </div>
-                  <div className="bg-gray-200 h-full w-full col-span-1 row-span-1">
-                    <img src={pl.images[3] || 'https://images.unsplash.com/photo-1498654896293-37aacf113fd9'} className="w-full h-full object-cover" alt="" />
-                  </div>
+            {playlists.length > 0 ? playlists.map(pl => (
+              <div key={pl.course_id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
+                <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800">
+                  {pl.thumbnail_url ? (
+                    <img src={pl.thumbnail_url} className="w-full h-full object-cover" alt={pl.title} />
+                  ) : (
+                    <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
+                      <span className="text-gray-400 text-xs">이미지 없음</span>
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center gap-1 mb-0.5">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#FF4B4B]">
@@ -216,9 +299,13 @@ export default function MyPage() {
                   </svg>
                   <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{pl.title}</h4>
                 </div>
-                <p className="text-[11px] text-gray-400">{pl.spots}곳 · {pl.hours}시간</p>
+                <p className="text-[11px] text-gray-400">{pl.place_count}곳 · {pl.total_duration ? `${pl.total_duration}분` : '시간 미정'}</p>
               </div>
-            ))}
+            )) : (
+              <div className="w-full text-center py-6">
+                <p className="text-[13px] text-gray-400">저장한 플리가 없습니다.</p>
+              </div>
+            )}
           </div>
         </div>
 
