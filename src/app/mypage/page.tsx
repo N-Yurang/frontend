@@ -12,6 +12,7 @@ export default function MyPage() {
   const [tags, setTags] = useState<string[]>([]);
   const [isEditingTags, setIsEditingTags] = useState(false);
   const [newTagInput, setNewTagInput] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [playlists, setPlaylists] = useState<any[]>([]);
 
   const { theme, setTheme } = useTheme();

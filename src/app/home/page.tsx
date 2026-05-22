@@ -172,7 +172,6 @@ export default function Home() {
 
   // Fetch trends and hidden places once on mount
   useEffect(() => {
-    setIsLoading(true);
     Promise.all([
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
@@ -186,7 +185,6 @@ export default function Home() {
 
   // Fetch festivals dynamically based on selectedMonth and selectedYear
   useEffect(() => {
-    setIsFestivalLoading(true);
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/festivals?year=${selectedYear}&month=${selectedMonth}`)
       .then(res => res.json())
       .then((festivalsData) => {

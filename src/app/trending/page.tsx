@@ -26,7 +26,6 @@ export default function TrendingPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    setIsLoading(true);
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`)
       .then(res => res.json())
       .then(data => {

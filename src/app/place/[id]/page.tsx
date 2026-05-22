@@ -69,7 +69,6 @@ export default function PlaceDetail() {
   const isSaved = useSavedStore((state) => state.isSaved);
 
   useEffect(() => {
-    setIsLoading(true);
     Promise.all([
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
