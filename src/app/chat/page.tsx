@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music4, Mic, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon, Loader2, RotateCcw, History, X, Trash2 } from 'lucide-react';
+import { Music4, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon, Loader2, RotateCcw, History, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useRecommendationStore, RecommendedPlace } from '@/store/useRecommendationStore';
 import { useChatStore, Message } from '@/store/useChatStore';
@@ -241,9 +241,7 @@ export default function TripAIChat() {
           />
 
           <div className="flex items-center gap-1.5">
-            <button className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-brand-red transition-all active:scale-90">
-              <Mic size={22} strokeWidth={2.5} />
-            </button>
+
             <button
               onClick={handleSend}
               disabled={!input.trim() || isLoading}

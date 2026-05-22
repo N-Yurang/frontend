@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, MapPin, Calendar, Flame, Compass, Mic, Play, MoreHorizontal, Info, Heart, Bell } from "lucide-react";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { Search, MapPin, Calendar, Flame, Compass, Play, MoreHorizontal, Info, Heart, Bell } from "lucide-react";
+import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationSheet from "@/components/ui/NotificationSheet";
@@ -71,7 +71,7 @@ export default function Home() {
   const handleDragEnd = () => {
     if (!touchStart || !touchEnd) return;
     const distance = touchStart - touchEnd;
-    
+
     // 왼쪽으로 스와이프 (다음)
     if (distance > 50) {
       setIsTransitioning(true);
@@ -79,13 +79,13 @@ export default function Home() {
         if (prev >= trendingPlaces.length) return prev;
         return prev + 1;
       });
-    } 
+    }
     // 오른쪽으로 스와이프 (이전)
     else if (distance < -50) {
       setIsTransitioning(true);
       setTrendIndex((prev) => (prev <= 0 ? trendingPlaces.length - 1 : prev - 1));
     }
-    
+
     setTouchStart(0);
     setTouchEnd(0);
   };
@@ -110,7 +110,7 @@ export default function Home() {
 
         if (Math.abs(e.deltaX) > 15) {
           if (wheelTimeout.current) return;
-          
+
           if (e.deltaX > 0) {
             setIsTransitioning(true);
             setTrendIndex((prev) => {
@@ -121,7 +121,7 @@ export default function Home() {
             setIsTransitioning(true);
             setTrendIndex((prev) => (prev <= 0 ? trendingPlaces.length - 1 : prev - 1));
           }
-          
+
           wheelTimeout.current = setTimeout(() => {
             wheelTimeout.current = null;
           }, 600);
@@ -178,7 +178,7 @@ export default function Home() {
       const timeout = setTimeout(() => {
         setIsTransitioning(false); // 애니메이션 끄기
         setTrendIndex(0); // 실제 첫 번째 인덱스로 이동
-        
+
         // 브라우저 렌더링 후 다시 애니메이션 켜기
         setTimeout(() => setIsTransitioning(true), 50);
       }, 700); // CSS transition duration (700ms)과 동일하게 설정
@@ -189,7 +189,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 pb-20 transition-colors duration-300">
       {/* Header */}
-      <header className="px-5 pt-3 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10 transition-colors duration-300 border-b border-gray-50 dark:border-gray-900">
+      <header className="px-5 pt-3 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-40 transition-colors duration-300 border-b border-gray-50 dark:border-gray-900">
         <div className="flex justify-between items-center mb-5">
           <div className="w-10" /> {/* Spacer for centering logo */}
           <h1 className="text-xl font-black text-brand-red tracking-widest">
@@ -221,9 +221,6 @@ export default function Home() {
             className="w-full h-full pl-11 pr-12 bg-transparent border-transparent text-[15px] font-medium outline-none z-10 relative dark:text-white"
           />
 
-          <div className="absolute right-4 z-10">
-            <Mic className="h-5 w-5 text-gray-400 hover:text-brand-red cursor-pointer transition-colors" />
-          </div>
 
           {!isFocused && !searchValue && (
             <div className="absolute inset-y-0 left-11 right-12 flex items-center pointer-events-none overflow-hidden">
@@ -252,12 +249,12 @@ export default function Home() {
               <Flame className="w-5 h-5 text-brand-red fill-brand-red/20" />
               <span>지금 뜨는 미디어 속 여행지</span>
             </h2>
-            <button className="text-xs font-bold text-gray-400 hover:text-brand-red">SEE ALL</button>
+            <Link href="/trending" className="text-xs font-bold text-gray-400 hover:text-brand-red">SEE ALL</Link>
           </div>
 
           <div className="relative">
             {/* 슬라이더 컨테이너: overflow-hidden + translateX로 부드럽게 전환 */}
-            <div 
+            <div
               ref={sliderContainerRef}
               className="overflow-hidden rounded-[32px] pb-2 cursor-grab active:cursor-grabbing"
               onTouchStart={handleDragStart}
@@ -288,7 +285,7 @@ export default function Home() {
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                        
+
                         {/* Like Button */}
                         <button
                           onClick={(e) => {
@@ -385,7 +382,7 @@ export default function Home() {
                         alt={item.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      
+
                       {/* Like Button */}
                       <button
                         onClick={(e) => {
@@ -433,11 +430,22 @@ export default function Home() {
             <div>
               <h2 className="flex items-center text-lg font-bold text-gray-900 dark:text-gray-100 gap-2 mb-1">
                 <Calendar className="w-5 h-5 text-brand-red" />
-                <span>이달의 축제 (3월)</span>
+                <span>이달의 축제</span>
               </h2>
               <p className="text-xs text-gray-500 font-medium">다가오는 봄바람과 함께 즐기는 축제들</p>
             </div>
-            <button className="text-xs font-bold text-brand-red">03 / 2024</button>
+            <button className="text-xs font-bold text-brand-red">
+              {festivals.length > 0 && (festivals[0].start_date || festivals[0].date) ? (
+                (() => {
+                  const d = new Date((festivals[0].start_date || festivals[0].date) as string);
+                  return !isNaN(d.getTime()) 
+                    ? `${String(d.getMonth() + 1).padStart(2, '0')} / ${new Date().getFullYear()}`
+                    : `${String(currentMonth).padStart(2, '0')} / ${new Date().getFullYear()}`;
+                })()
+              ) : (
+                `${String(currentMonth).padStart(2, '0')} / ${new Date().getFullYear()}`
+              )}
+            </button>
           </div>
 
           <div className="flex overflow-x-auto gap-5 pb-4 -mx-5 px-5 scrollbar-hide">
@@ -514,9 +522,9 @@ export default function Home() {
         </section>
       </div>
 
-      <NotificationSheet 
-        isOpen={isNotificationOpen} 
-        onClose={() => setIsNotificationOpen(false)} 
+      <NotificationSheet
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
       />
     </div>
   );
