@@ -8,6 +8,21 @@ import { useSavedStore } from "@/store/useSavedStore";
 import { motion, AnimatePresence } from "framer-motion";
 import { normalizeTags } from "@/utils/tagGrouper";
 
+interface PlaceData {
+  place_id: string | number;
+  name: string;
+  location: string;
+  image_url: string;
+  media_source?: string;
+  type?: string;
+  rating?: number;
+  reviews_count?: number;
+  description?: string;
+  hours?: string;
+  tags?: string[] | string;
+  category?: string;
+}
+
 // SVG Back Arrow Icon
 const BackArrowIcon = () => (
   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -47,7 +62,7 @@ export default function PlaceDetail() {
   const placeId = params.id as string;
   const [activeTab, setActiveTab] = useState("info");
 
-  const [place, setPlace] = useState<any>(null);
+  const [place, setPlace] = useState<PlaceData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const toggleItem = useSavedStore((state) => state.toggleItem);
@@ -60,7 +75,7 @@ export default function PlaceDetail() {
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
     ])
       .then(([trendsData, hiddenData]) => {
-        let allPlaces: any[] = [];
+        let allPlaces: PlaceData[] = [];
         if (trendsData?.status === "success") {
           allPlaces = [...allPlaces, ...trendsData.data.places];
         }

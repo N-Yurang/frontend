@@ -38,13 +38,13 @@ const DB_PLACE_TAGS: Record<string, string[]> = {
 };
 
 // CourseItem Component to handle drag controls and memo edit
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function CourseItem({
   place,
   index,
   selectedPlaceId,
   setSelectedPlaceId,
   saveMemoToState
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 }: any) {
   const controls = useDragControls();
   const [isEditingMemo, setIsEditingMemo] = useState(false);
@@ -52,6 +52,7 @@ function CourseItem({
 
   // Reset memo state if place.memo changes externally
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     setMemo(place.memo || "");
   }, [place.memo]);
 
@@ -177,6 +178,7 @@ export default function CourseMap() {
   const setRecommendations = useRecommendationStore((state) => state.setRecommendations);
   const tripTitle = useRecommendationStore((state) => state.tripTitle);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [places, setPlaces] = useState<any[]>([]);
 
   useEffect(() => {

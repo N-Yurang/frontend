@@ -1,11 +1,11 @@
-export const normalizeTags = (tags: any): string[] => {
+export const normalizeTags = (tags: unknown): string[] => {
   if (!tags) return [];
-  if (Array.isArray(tags)) return tags;
+  if (Array.isArray(tags)) return tags as string[];
   if (typeof tags === "string") {
     try {
       const parsed = JSON.parse(tags);
-      if (Array.isArray(parsed)) return parsed;
-    } catch (e) {
+      if (Array.isArray(parsed)) return parsed as string[];
+    } catch {
       // Ignore JSON parse error and try splitting
     }
     
