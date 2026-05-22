@@ -278,7 +278,7 @@ export default function Home() {
                 >
                   {(trendingPlaces.length > 0 ? [...trendingPlaces, trendingPlaces[0]] : []).map((item: Place, idx) => (
                     <div key={`${item.place_id}-${idx}`} className="min-w-full flex-shrink-0">
-                      <div className="relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800">
+                      <Link href={`/place/${item.place_id}`} className="block relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800">
                         <img
                           src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
                           alt={item.name}
@@ -323,7 +323,7 @@ export default function Home() {
                             </h3>
                           </div>
                         </div>
-                      </div>
+                      </Link>
                     </div>
                   ))}
                 </div>
@@ -376,7 +376,8 @@ export default function Home() {
                     transition={{ delay: idx * 0.1 }}
                     className="min-w-[160px] w-[calc(50vw-28px)] max-w-[200px] flex-shrink-0 group cursor-pointer"
                   >
-                    <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
+                    <Link href={`/place/${item.place_id}`} className="block w-full h-full">
+                      <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
                       <img
                         src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
                         alt={item.name}
@@ -417,6 +418,7 @@ export default function Home() {
                         <MoreHorizontal size={14} />
                       </button>
                     </div>
+                    </Link>
                   </motion.div>
                 );
               })

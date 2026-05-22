@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { ChevronLeft, Search, Heart, MapPin, Navigation, ChevronRight, Tv } from "lucide-react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 
 interface Place {
   place_id: number;
@@ -88,7 +89,7 @@ export default function TrendingPage() {
             해당하는 장소가 없습니다.
           </div>
         ) : filteredPlaces.map((place) => (
-          <div key={place.place_id} className="bg-white rounded-[20px] shadow-[0_2px_16px_rgba(44,44,42,0.08)] overflow-hidden flex flex-col">
+          <Link href={`/place/${place.place_id}`} key={place.place_id} className="bg-white rounded-[20px] shadow-[0_2px_16px_rgba(44,44,42,0.08)] overflow-hidden flex flex-col block">
             {/* Image Section */}
             <div className="relative w-full h-[180px] bg-gray-200">
               <img
@@ -104,7 +105,10 @@ export default function TrendingPage() {
               </div>
 
               {/* Heart Button */}
-              <button className="absolute top-3 right-3 w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/40 transition-colors">
+              <button 
+                onClick={(e) => e.preventDefault()}
+                className="absolute top-3 right-3 w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/40 transition-colors"
+              >
                 <Heart size={16} className="text-white" />
               </button>
             </div>
@@ -124,13 +128,16 @@ export default function TrendingPage() {
 
               <div className="w-full h-[1px] bg-[#E8E7E2] my-4" />
 
-              <button className="w-full h-11 bg-gradient-to-br from-[#FA5252] to-[#FF8E73] rounded-xl flex items-center justify-center gap-2 text-white font-semibold text-[14px] hover:opacity-90 transition-opacity">
+              <button 
+                onClick={(e) => { e.preventDefault(); router.push('/chat'); }}
+                className="w-full h-11 bg-gradient-to-br from-[#FA5252] to-[#FF8E73] rounded-xl flex items-center justify-center gap-2 text-white font-semibold text-[14px] hover:opacity-90 transition-opacity"
+              >
                 <Navigation size={18} className="fill-white" />
                 이걸로 코스 짜기
                 <ChevronRight size={16} />
               </button>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
     </div>

@@ -12,7 +12,8 @@ export default function BottomNav() {
     pathname === '/' || 
     pathname === '/onboarding' || 
     pathname === '/login' || 
-    pathname === '/signup'
+    pathname === '/signup' ||
+    pathname.startsWith('/place')
   ) {
     return null;
   }
