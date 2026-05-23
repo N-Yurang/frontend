@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, Calendar, Flame, Compass, Play, MoreHorizontal, Info, Heart, Bell, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationSheet from "@/components/ui/NotificationSheet";
 import { useSavedStore } from "@/store/useSavedStore";
@@ -36,6 +35,48 @@ interface Place {
   location: string;
   image_url: string;
   media_source?: string;
+}
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+function getApiUrl(path: string) {
+  if (!API_BASE_URL) return null;
+  return `${API_BASE_URL}${path}`;
+}
+
+function getAssetUrl(path?: string) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+}
+
+async function fetchJson<T>(path: string): Promise<T | null> {
+  const url = getApiUrl(path);
+  if (!url) {
+    console.warn("NEXT_PUBLIC_API_URL is not configured.");
+    return null;
+  }
+
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(`Request failed: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+    return null;
+  } finally {
+    window.clearTimeout(timeout);
+  }
+}
+
+interface ApiListResponse<T> {
+  status?: string;
+  data?: T;
 }
 
 export default function Home() {
@@ -91,7 +132,7 @@ export default function Home() {
   };
 
   const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth() + 1);
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [selectedYear] = useState<number>(new Date().getFullYear());
   const [isMonthDropdownOpen, setIsMonthDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -160,7 +201,13 @@ export default function Home() {
 
     // passive: false로 이벤트를 등록해야 preventDefault()가 동작함
     container.addEventListener('wheel', handleNativeWheel, { passive: false });
-    return () => container.removeEventListener('wheel', handleNativeWheel);
+    return () => {
+      container.removeEventListener('wheel', handleNativeWheel);
+      if (wheelTimeout.current) {
+        clearTimeout(wheelTimeout.current);
+        wheelTimeout.current = null;
+      }
+    };
   }, [trendingPlaces.length]);
 
   useEffect(() => {
@@ -173,29 +220,30 @@ export default function Home() {
   // Fetch trends and hidden places once on mount
   useEffect(() => {
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
+      fetchJson<ApiListResponse<{ places?: Place[] }>>("/api/places/trends"),
+      fetchJson<ApiListResponse<{ places?: Place[] }>>("/api/places/hidden")
     ])
       .then(([trendsData, hiddenData]) => {
-        if (trendsData && trendsData.status === "success") setTrendingPlaces(trendsData.data.places);
-        if (hiddenData && hiddenData.status === "success") setHiddenPlaces(hiddenData.data.places);
+        if (trendsData?.status === "success") setTrendingPlaces(trendsData.data?.places ?? []);
+        if (hiddenData?.status === "success") setHiddenPlaces(hiddenData.data?.places ?? []);
       })
-      .catch(console.error);
+      .catch(console.error)
+      .finally(() => setIsLoading(false));
   }, []);
 
   // Fetch festivals dynamically based on selectedMonth and selectedYear
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/festivals?year=${selectedYear}&month=${selectedMonth}`)
-      .then(res => res.json())
+    fetchJson<ApiListResponse<{ festivals?: Festival[] }>>(`/api/festivals?year=${selectedYear}&month=${selectedMonth}`)
       .then((festivalsData) => {
-        if (festivalsData && festivalsData.status === "success") {
-          setFestivals(festivalsData.data.festivals);
+        if (festivalsData?.status === "success") {
+          setFestivals(festivalsData.data?.festivals ?? []);
+        } else {
+          setFestivals([]);
         }
       })
       .catch(console.error)
       .finally(() => {
         setIsFestivalLoading(false);
-        setIsLoading(false);
       });
   }, [selectedYear, selectedMonth]);
 
@@ -320,7 +368,7 @@ export default function Home() {
                     <div key={`${item.place_id}-${idx}`} className="min-w-full flex-shrink-0">
                       <Link href={`/place/${item.place_id}`} className="block relative w-full h-64 rounded-[32px] overflow-hidden cursor-pointer group shadow-xl shadow-gray-200/50 dark:shadow-none bg-gray-100 dark:bg-gray-800">
                         <img
-                          src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
+                          src={getAssetUrl(item.image_url)}
                           alt={item.name}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000"
                         />
@@ -329,13 +377,14 @@ export default function Home() {
                         {/* Like Button */}
                         <button
                           onClick={(e) => {
+                            e.preventDefault();
                             e.stopPropagation();
                             toggleItem({
                               id: `place-${item.place_id}`,
                               type: 'place',
                               name: item.name || item.location,
                               location: item.location,
-                              image_url: item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`
+                              image_url: getAssetUrl(item.image_url)
                             });
                           }}
                           className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-white/40 active:scale-95"
@@ -419,7 +468,7 @@ export default function Home() {
                     <Link href={`/place/${item.place_id}`} className="block w-full h-full">
                       <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
                       <img
-                        src={item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`}
+                        src={getAssetUrl(item.image_url)}
                         alt={item.name}
                         className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
@@ -427,13 +476,14 @@ export default function Home() {
                       {/* Like Button */}
                       <button
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           toggleItem({
                             id: `place-${item.place_id}`,
                             type: 'place',
                             name: item.name,
                             location: item.location,
-                            image_url: item.image_url?.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`
+                            image_url: getAssetUrl(item.image_url)
                           });
                         }}
                         className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
@@ -506,6 +556,7 @@ export default function Home() {
                           <button
                             key={m}
                             onClick={() => {
+                              setIsFestivalLoading(true);
                               setSelectedMonth(m);
                               setIsMonthDropdownOpen(false);
                             }}
@@ -549,7 +600,7 @@ export default function Home() {
               </motion.div>
             ) : (
               festivals.map((item: Festival, idx: number) => {
-                const imageUrl = item.image_url ? (item.image_url.startsWith('http') ? item.image_url : `${process.env.NEXT_PUBLIC_API_URL}${item.image_url}`) : item.image;
+                const imageUrl = item.image_url ? getAssetUrl(item.image_url) : getAssetUrl(item.image);
                 const title = item.name || item.title;
 
                 const formatDate = (dateStr: string) => {
@@ -581,6 +632,7 @@ export default function Home() {
                       {/* Like Button */}
                       <button
                         onClick={(e) => {
+                          e.preventDefault();
                           e.stopPropagation();
                           toggleItem({
                             id: `festival-${item.festival_id || item.id}`,

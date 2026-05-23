@@ -1,9 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useSyncExternalStore } from "react";
 import { Settings, Edit2, ChevronRight, CheckCircle2, Plus, FileText, HelpCircle, LogOut, Bell, ChevronLeft, MapPin, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSavedStore } from "@/store/useSavedStore";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+function getApiUrl(path: string) {
+  if (!API_BASE_URL) return null;
+  return `${API_BASE_URL}${path}`;
+}
+
+const emptySubscribe = () => () => {};
+const getClientSnapshot = () => true;
+const getServerSnapshot = () => false;
 
 export default function MyPage() {
   const [view, setView] = useState<'main' | 'settings'>('main');
@@ -17,34 +28,42 @@ export default function MyPage() {
 
   const { theme, setTheme } = useTheme();
 
+  const isMounted = useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
   const savedItems = useSavedStore((state) => state.savedItems);
-  const savedPlaces = savedItems.filter((i) => i.type === 'place');
+  const savedPlaces = isMounted && Array.isArray(savedItems)
+    ? savedItems.filter((i) => i?.type === 'place')
+    : [];
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem("triply_token");
         if (!token) return;
+        const userUrl = getApiUrl("/api/users/me");
+        const coursesUrl = getApiUrl("/api/courses");
+        if (!userUrl || !coursesUrl) return;
 
         // Fetch User Info
-        const userRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/me`, {
+        const userRes = await fetch(userUrl, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (userRes.ok) {
           const userData = await userRes.json();
-          setUserName(userData.data.name);
-          if (userData.data.preferences?.travel_tags) {
+          if (userData.data?.name) {
+            setUserName(userData.data.name);
+          }
+          if (Array.isArray(userData.data?.preferences?.travel_tags)) {
             setTags(userData.data.preferences.travel_tags);
           }
         }
 
         // Fetch Saved Courses
-        const courseRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/courses`, {
+        const courseRes = await fetch(coursesUrl, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (courseRes.ok) {
           const courseData = await courseRes.json();
-          setPlaylists(courseData.data.courses);
+          setPlaylists(Array.isArray(courseData.data?.courses) ? courseData.data.courses : []);
         }
       } catch (err) {
         console.error("Failed to fetch user data:", err);
@@ -57,8 +76,10 @@ export default function MyPage() {
     try {
       const token = localStorage.getItem("triply_token");
       if (!token) return;
+      const preferencesUrl = getApiUrl("/api/users/preferences");
+      if (!preferencesUrl) return;
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/preferences`, {
+      const res = await fetch(preferencesUrl, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -324,7 +345,13 @@ export default function MyPage() {
               {savedPlaces.map(place => (
                 <div key={place.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
                   <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative">
-                    <img src={place.image_url} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
+                    {place.image_url ? (
+                      <img src={place.image_url} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
+                        <span className="text-[11px] text-gray-400">이미지 없음</span>
+                      </div>
+                    )}
                   </div>
                   <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{place.name}</h4>
                   {place.location && (
