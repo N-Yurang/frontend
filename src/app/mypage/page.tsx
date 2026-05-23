@@ -4,6 +4,7 @@ import { useState, useEffect, useSyncExternalStore } from "react";
 import { Settings, Edit2, ChevronRight, CheckCircle2, Plus, FileText, HelpCircle, LogOut, Bell, ChevronLeft, MapPin, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSavedStore } from "@/store/useSavedStore";
+import { normalizeTags } from "@/utils/tagGrouper";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -16,13 +17,17 @@ const emptySubscribe = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
 
+const AVAILABLE_TAGS = [
+  "자연친화", "휴식", "가족여행", "혼자", "익스트림", "커플",
+  "맛집탐방", "도심야경", "사진명소", "가성비", "럭셔리", "역사/문화"
+];
+
 export default function MyPage() {
   const [view, setView] = useState<'main' | 'settings'>('main');
   const [userName, setUserName] = useState("어드벤처유한");
   const [userTitle, setUserTitle] = useState("강릉 감성 여행자");
   const [tags, setTags] = useState<string[]>([]);
   const [isEditingTags, setIsEditingTags] = useState(false);
-  const [newTagInput, setNewTagInput] = useState("");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [playlists, setPlaylists] = useState<any[]>([]);
 
@@ -52,8 +57,8 @@ export default function MyPage() {
           if (userData.data?.name) {
             setUserName(userData.data.name);
           }
-          if (Array.isArray(userData.data?.preferences?.travel_tags)) {
-            setTags(userData.data.preferences.travel_tags);
+          if (userData.data?.preferences?.travel_tags) {
+            setTags(normalizeTags(userData.data.preferences.travel_tags));
           }
         }
 
@@ -85,7 +90,7 @@ export default function MyPage() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ travel_tags: tags })
+        body: JSON.stringify({ travel_tags: { flat_tags: tags } })
       });
 
       if (res.ok) {
@@ -96,10 +101,9 @@ export default function MyPage() {
     }
   };
 
-  const handleAddTag = () => {
-    if (newTagInput.trim() && !tags.includes(newTagInput.trim())) {
-      setTags([...tags, newTagInput.trim()]);
-      setNewTagInput("");
+  const handleAddTag = (tagToAdd: string) => {
+    if (!tags.includes(tagToAdd)) {
+      setTags([...tags, tagToAdd]);
     }
   };
 
@@ -266,27 +270,35 @@ export default function MyPage() {
                 )}
               </div>
             ))}
-            {isEditingTags ? (
-              <div className="flex items-center gap-2">
-                <input 
-                  type="text" 
-                  value={newTagInput} 
-                  onChange={(e) => setNewTagInput(e.target.value)} 
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                  className="px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-[13px] outline-none w-28 text-gray-900 dark:text-white"
-                  placeholder="태그 입력"
-                />
-                <button onClick={handleAddTag} className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-[#FF4B4B] bg-[#FF4B4B] text-white transition-colors">
-                  <span className="text-[13px] font-medium">추가</span>
-                </button>
-              </div>
-            ) : (
+            {!isEditingTags && (
               <button onClick={() => setIsEditingTags(true)} className="flex items-center gap-1 px-4 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <Plus size={14} />
                 <span className="text-[13px] font-medium">추가</span>
               </button>
             )}
           </div>
+
+          {/* Show available tags when editing */}
+          {isEditingTags && (
+            <div className="mt-5 pt-5 border-t border-gray-100 dark:border-gray-800">
+              <p className="text-[13px] font-bold text-gray-500 mb-3">추가할 수 있는 취향 태그</p>
+              <div className="flex flex-wrap gap-2">
+                {AVAILABLE_TAGS.filter(t => !tags.includes(t)).map(tag => (
+                  <button
+                    key={tag}
+                    onClick={() => handleAddTag(tag)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-full border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:border-[#FF4B4B] hover:text-[#FF4B4B] transition-colors"
+                  >
+                    <Plus size={12} />
+                    <span className="text-[13px] font-medium">{tag}</span>
+                  </button>
+                ))}
+                {AVAILABLE_TAGS.filter(t => !tags.includes(t)).length === 0 && (
+                  <span className="text-[13px] text-gray-400">모든 취향 태그를 선택하셨습니다.</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Saved Playlists */}
