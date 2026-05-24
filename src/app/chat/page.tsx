@@ -2,10 +2,10 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Music4, Send, Plus, Headphones, Volume2, Info, ChevronLeft, Map as MapIcon, Loader2, RotateCcw, History, X, Trash2 } from 'lucide-react';
+import { Music4, Send, Plus, Headphones, Volume2, ChevronLeft, Map as MapIcon, Loader2, RotateCcw, History, X, Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useRecommendationStore, RecommendedPlace } from '@/store/useRecommendationStore';
-import { useChatStore, Message } from '@/store/useChatStore';
+import { useRecommendationStore } from '@/store/useRecommendationStore';
+import { useChatStore } from '@/store/useChatStore';
 
 export default function TripAIChat() {
   const [input, setInput] = useState("");

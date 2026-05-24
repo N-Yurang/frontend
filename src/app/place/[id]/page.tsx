@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Share2, Heart, MapPin, Star, Clock } from "lucide-react";
+import { Heart, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
 import { useSavedStore } from "@/store/useSavedStore";
-import { motion, AnimatePresence } from "framer-motion";
+
 import { normalizeTags } from "@/utils/tagGrouper";
 
 interface PlaceData {

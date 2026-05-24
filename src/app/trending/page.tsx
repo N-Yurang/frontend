@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronLeft, Search, Heart, MapPin, Navigation, ChevronRight, Tv } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
+
 import Link from "next/link";
 import { normalizeTags } from "@/utils/tagGrouper";
 

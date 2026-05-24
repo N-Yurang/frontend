@@ -33,7 +33,7 @@ export default function TripAIChat() {
             } else {
                 setMessages(prev => [...prev, { role: "ai", text: "에러 발생: " + data.message }]);
             }
-        } catch (error) {
+        } catch {
             setMessages(prev => [...prev, { role: "ai", text: "서버 연결에 실패했습니다." }]);
         } finally {
             setIsLoading(false);

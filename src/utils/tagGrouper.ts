@@ -3,8 +3,9 @@ export const normalizeTags = (tags: unknown): string[] => {
   if (Array.isArray(tags)) return tags as string[];
   
   if (typeof tags === "object" && tags !== null) {
-    if ("flat_tags" in tags && Array.isArray((tags as any).flat_tags)) {
-      return (tags as any).flat_tags as string[];
+    const obj = tags as Record<string, unknown>;
+    if ("flat_tags" in obj && Array.isArray(obj.flat_tags)) {
+      return obj.flat_tags as string[];
     }
   }
 

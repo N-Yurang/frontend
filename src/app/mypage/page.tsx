@@ -13,6 +13,12 @@ function getApiUrl(path: string) {
   return `${API_BASE_URL}${path}`;
 }
 
+function getAssetUrl(path?: string) {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
+}
+
 const emptySubscribe = () => () => {};
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
@@ -22,10 +28,56 @@ const AVAILABLE_TAGS = [
   "맛집탐방", "도심야경", "사진명소", "가성비", "럭셔리", "역사/문화"
 ];
 
+function formatDuration(minutes: number | null | undefined) {
+  if (minutes === null || minutes === undefined) return '시간 미정';
+  if (minutes === 0) return '0분';
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0 && m > 0) return `${h}시간 ${m}분`;
+  if (h > 0) return `${h}시간`;
+  return `${m}분`;
+}
+
+const CourseCollage = ({ images }: { images: string[] }) => {
+  if (!images || images.length === 0) {
+    return (
+      <div className="w-full h-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+        <span className="text-gray-400 text-xs">이미지 없음</span>
+      </div>
+    );
+  }
+  
+  const urls = images.map(getAssetUrl);
+
+  if (urls.length === 1) {
+    return <img src={urls[0]} className="w-full h-full object-cover" alt="course" />;
+  }
+  if (urls.length === 2) {
+    return (
+      <div className="flex w-full h-full gap-0.5 bg-white dark:bg-gray-900">
+        <img src={urls[0]} className="w-1/2 h-full object-cover" alt="course 1" />
+        <img src={urls[1]} className="w-1/2 h-full object-cover" alt="course 2" />
+      </div>
+    );
+  }
+  return (
+    <div className="flex w-full h-full gap-0.5 bg-white dark:bg-gray-900">
+      <div className="w-[60%] h-full">
+        <img src={urls[0]} className="w-full h-full object-cover" alt="course 1" />
+      </div>
+      <div className="w-[40%] h-full flex flex-col gap-0.5">
+        <img src={urls[1]} className="w-full h-[calc(50%-1px)] object-cover" alt="course 2" />
+        <img src={urls[2]} className="w-full h-[calc(50%-1px)] object-cover" alt="course 3" />
+      </div>
+    </div>
+  );
+};
+
 export default function MyPage() {
-  const [view, setView] = useState<'main' | 'settings'>('main');
-  const [userName, setUserName] = useState("어드벤처유한");
-  const [userTitle, setUserTitle] = useState("강릉 감성 여행자");
+  const [view, setView] = useState<'main' | 'settings' | 'savedPlaces' | 'savedPlaylists'>('main');
+  const [deletingPlaylistId, setDeletingPlaylistId] = useState<number | null>(null);
+  const [userName, setUserName] = useState("로딩중...");
+  const [userId, setUserId] = useState("loading...");
   const [tags, setTags] = useState<string[]>([]);
   const [isEditingTags, setIsEditingTags] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -35,6 +87,7 @@ export default function MyPage() {
 
   const isMounted = useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
   const savedItems = useSavedStore((state) => state.savedItems);
+  const toggleItem = useSavedStore((state) => state.toggleItem);
   const savedPlaces = isMounted && Array.isArray(savedItems)
     ? savedItems.filter((i) => i?.type === 'place')
     : [];
@@ -57,6 +110,9 @@ export default function MyPage() {
           if (userData.data?.name) {
             setUserName(userData.data.name);
           }
+          if (userData.data?.user_id) {
+            setUserId(userData.data.user_id);
+          }
           if (userData.data?.preferences?.travel_tags) {
             setTags(normalizeTags(userData.data.preferences.travel_tags));
           }
@@ -68,7 +124,31 @@ export default function MyPage() {
         });
         if (courseRes.ok) {
           const courseData = await courseRes.json();
-          setPlaylists(Array.isArray(courseData.data?.courses) ? courseData.data.courses : []);
+          const courses = Array.isArray(courseData.data?.courses) ? courseData.data.courses : [];
+          
+          // N+1 Fetch to get multiple images
+          const coursesWithDetails = await Promise.all(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            courses.map(async (c: any) => {
+              try {
+                const detailRes = await fetch(getApiUrl(`/api/courses/${c.course_id}`) || '', {
+                  headers: { Authorization: `Bearer ${token}` }
+                });
+                if (detailRes.ok) {
+                  const detailData = await detailRes.json();
+                  const places = detailData.data?.course?.places || [];
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  const images = places.map((p: any) => p.image_url).filter(Boolean);
+                  return { ...c, images };
+                }
+              } catch {
+                // Ignore error
+              }
+              // fallback to thumbnail_url if details fail
+              return { ...c, images: c.thumbnail_url ? [c.thumbnail_url] : [] };
+            })
+          );
+          setPlaylists(coursesWithDetails);
         }
       } catch (err) {
         console.error("Failed to fetch user data:", err);
@@ -110,6 +190,140 @@ export default function MyPage() {
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
+
+  if (view === 'savedPlaces') {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#F8F9FA] dark:bg-gray-950 pb-20">
+        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10">
+          <button onClick={() => setView('main')} className="p-1 -ml-1 text-gray-900 dark:text-white">
+            <ChevronLeft size={24} />
+          </button>
+          <h1 className="text-[17px] font-bold text-gray-900 dark:text-white absolute left-1/2 -translate-x-1/2">
+            찜한 장소 전체보기
+          </h1>
+          <div className="w-6" />
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 pt-4 pb-10">
+          <div className="grid grid-cols-2 gap-4">
+            {savedPlaces.map(place => (
+              <div key={place.id} className="flex flex-col relative group">
+                <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative shadow-sm">
+                  {place.image_url ? (
+                    <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
+                      <span className="text-[11px] text-gray-400">이미지 없음</span>
+                    </div>
+                  )}
+                  {/* Immediate Delete Button */}
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleItem(place);
+                    }}
+                    className="absolute top-2 right-2 w-7 h-7 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-[#FF4B4B]/90 transition-colors z-10 active:scale-95 shadow-md"
+                  >
+                    <X size={14} className="text-white" />
+                  </button>
+                </div>
+                <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{place.name}</h4>
+                {place.location && (
+                  <p className="text-[11px] text-gray-400 truncate flex items-center gap-0.5 mt-0.5">
+                    <MapPin size={10} className="text-[#FF4B4B]" /> {place.location}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+          {savedPlaces.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <p className="text-[14px] text-gray-400">찜한 장소가 없습니다.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'savedPlaylists') {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#F8F9FA] dark:bg-gray-950 pb-20">
+        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10">
+          <button onClick={() => setView('main')} className="p-1 -ml-1 text-gray-900 dark:text-white">
+            <ChevronLeft size={24} />
+          </button>
+          <h1 className="text-[17px] font-bold text-gray-900 dark:text-white absolute left-1/2 -translate-x-1/2">
+            저장한 플리 전체보기
+          </h1>
+          <div className="w-6" />
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 pt-4 pb-10">
+          <div className="grid grid-cols-2 gap-4">
+            {playlists.map(pl => (
+              <div key={pl.course_id} className="flex flex-col relative group bg-white dark:bg-gray-900 rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-800 pb-3">
+                <div className="w-full h-[120px] bg-gray-100 dark:bg-gray-800 relative">
+                  <CourseCollage images={pl.images || (pl.thumbnail_url ? [pl.thumbnail_url] : [])} />
+                  <button 
+                    onClick={() => setDeletingPlaylistId(pl.course_id)}
+                    className="absolute top-2 right-2 w-7 h-7 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-[#FF4B4B]/90 transition-colors z-10 active:scale-95 shadow-md"
+                  >
+                    <X size={14} className="text-white" />
+                  </button>
+                </div>
+                <div className="px-3 pt-3">
+                  <div className="flex items-start gap-1.5 mb-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#FF4B4B] shrink-0 mt-[3px]">
+                      <path d="M8 6h13" />
+                      <path d="M8 12h13" />
+                      <path d="M8 18h13" />
+                      <path d="M3 6h.01" />
+                      <path d="M3 12h.01" />
+                      <path d="M3 18h.01" />
+                    </svg>
+                    <h4 className="font-bold text-[14px] text-gray-900 dark:text-white leading-tight line-clamp-2">{pl.title}</h4>
+                  </div>
+                  <p className="text-[12px] text-gray-400 pl-[20px]">{pl.place_count}곳 · {formatDuration(pl.total_duration)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {playlists.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <p className="text-[14px] text-gray-400">저장한 플리가 없습니다.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Delete Confirmation Modal */}
+        {deletingPlaylistId !== null && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-5 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-900 rounded-3xl p-6 w-full max-w-[320px] shadow-xl border border-gray-100 dark:border-gray-800">
+              <h3 className="text-[18px] font-bold text-gray-900 dark:text-white mb-2 text-center">삭제하시겠습니까?</h3>
+              <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-6 text-center">선택한 플레이리스트가 목록에서 영구적으로 삭제됩니다.</p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setDeletingPlaylistId(null)}
+                  className="flex-1 py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-[15px] active:scale-95 transition-all"
+                >
+                  취소
+                </button>
+                <button 
+                  onClick={() => {
+                    setPlaylists(playlists.filter(pl => pl.course_id !== deletingPlaylistId));
+                    setDeletingPlaylistId(null);
+                  }}
+                  className="flex-1 py-3.5 rounded-2xl bg-[#FF4B4B] hover:bg-red-600 text-white font-bold text-[15px] active:scale-95 transition-all shadow-md shadow-red-500/20"
+                >
+                  삭제
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (view === 'settings') {
     return (
@@ -218,7 +432,7 @@ export default function MyPage() {
             {/* Info */}
             <div className="flex flex-col flex-1">
               <h2 className="text-[18px] font-bold text-gray-900 dark:text-white mb-1">{userName}</h2>
-              <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-2">{userTitle}</p>
+              <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-2">@{userId}</p>
               <button className="flex items-center gap-1.5 border border-gray-200 dark:border-gray-700 rounded-full px-3 py-1.5 w-fit hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <Edit2 size={12} className="text-gray-400" />
                 <span className="text-[12px] font-medium text-gray-600 dark:text-gray-300">수정</span>
@@ -305,35 +519,31 @@ export default function MyPage() {
         <div className="bg-white dark:bg-gray-900 rounded-[24px] p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-[16px] font-bold text-gray-900 dark:text-white">저장한 플리</h3>
-            <button className="text-[13px] font-medium text-[#FF4B4B] flex items-center">
+            <button onClick={() => setView('savedPlaylists')} className="text-[13px] font-medium text-[#FF4B4B] flex items-center hover:underline">
               전체보기 <ChevronRight size={14} />
             </button>
           </div>
 
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-2">
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-4">
             {playlists.length > 0 ? playlists.map(pl => (
-              <div key={pl.course_id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
-                <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800">
-                  {pl.thumbnail_url ? (
-                    <img src={pl.thumbnail_url} className="w-full h-full object-cover" alt={pl.title} />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center">
-                      <span className="text-gray-400 text-xs">이미지 없음</span>
-                    </div>
-                  )}
+              <div key={pl.course_id} className="min-w-[160px] w-[160px] flex flex-col shrink-0 bg-white dark:bg-gray-800 rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-700">
+                <div className="w-full h-[100px] bg-gray-100 dark:bg-gray-700">
+                  <CourseCollage images={pl.images || (pl.thumbnail_url ? [pl.thumbnail_url] : [])} />
                 </div>
-                <div className="flex items-center gap-1 mb-0.5">
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#FF4B4B]">
-                    <path d="M8 6h13" />
-                    <path d="M8 12h13" />
-                    <path d="M8 18h13" />
-                    <path d="M3 6h.01" />
-                    <path d="M3 12h.01" />
-                    <path d="M3 18h.01" />
-                  </svg>
-                  <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{pl.title}</h4>
+                <div className="p-3">
+                  <div className="flex items-start gap-1.5 mb-1.5">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#FF4B4B] shrink-0 mt-[3px]">
+                      <path d="M8 6h13" />
+                      <path d="M8 12h13" />
+                      <path d="M8 18h13" />
+                      <path d="M3 6h.01" />
+                      <path d="M3 12h.01" />
+                      <path d="M3 18h.01" />
+                    </svg>
+                    <h4 className="font-bold text-[14px] text-gray-900 dark:text-white leading-tight line-clamp-2">{pl.title}</h4>
+                  </div>
+                  <p className="text-[12px] text-gray-400 pl-[20px]">{pl.place_count}곳 · {formatDuration(pl.total_duration)}</p>
                 </div>
-                <p className="text-[11px] text-gray-400">{pl.place_count}곳 · {pl.total_duration ? `${pl.total_duration}분` : '시간 미정'}</p>
               </div>
             )) : (
               <div className="w-full text-center py-6">
@@ -347,7 +557,7 @@ export default function MyPage() {
         <div className="bg-white dark:bg-gray-900 rounded-[24px] p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-[16px] font-bold text-gray-900 dark:text-white">찜한 장소</h3>
-            <button className="text-[13px] font-medium text-[#FF4B4B] flex items-center">
+            <button onClick={() => setView('savedPlaces')} className="text-[13px] font-medium text-[#FF4B4B] flex items-center hover:underline">
               전체보기 <ChevronRight size={14} />
             </button>
           </div>
@@ -358,7 +568,7 @@ export default function MyPage() {
                 <div key={place.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
                   <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative">
                     {place.image_url ? (
-                      <img src={place.image_url} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
+                      <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
                     ) : (
                       <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
                         <span className="text-[11px] text-gray-400">이미지 없음</span>

@@ -3,10 +3,18 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, MessageCircle, Map, User } from 'lucide-react';
+import { useEffect } from 'react';
 
 export default function BottomNav() {
   const pathname = usePathname();
   
+  // [TESTING] 자동으로 더미 토큰 주입 (로그인 상태 유지 - 유효한 백엔드 JWT)
+  useEffect(() => {
+    if (!localStorage.getItem('triply_token') || localStorage.getItem('triply_token') === 'dummy-token-1234') {
+      localStorage.setItem('triply_token', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoidGVzdHVzZXIiLCJpYXQiOjE3Nzk2NDM0MzYsImV4cCI6MTc4MDI0ODIzNn0.ls792KZfyNRDs8Oo-Fk90ZvdbSSYcBfTvXViipSJioU');
+    }
+  }, []);
+
   // Hide BottomNav on splash, onboarding, login, and signup
   if (
     pathname === '/' || 

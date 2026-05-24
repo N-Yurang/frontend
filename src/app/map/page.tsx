@@ -7,13 +7,11 @@ import {
   Play,
   Shuffle,
   MapPin,
-  Share2,
   Bookmark,
   Loader2,
   ChevronLeft,
   GripVertical,
-  Edit3,
-  Check
+  Edit3
 } from 'lucide-react';
 import { motion, Reorder, useDragControls } from 'framer-motion';
 import { useRecommendationStore, RecommendedPlace } from "@/store/useRecommendationStore";
@@ -180,6 +178,7 @@ export default function CourseMap() {
       .then(data => {
         if (data?.status === "success" && data.data?.places) {
           const tagsMap: Record<string, string[]> = {};
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           data.data.places.forEach((p: any) => {
             if (p.name && p.tags) {
               tagsMap[p.name.trim()] = normalizeTags(p.tags);
@@ -193,7 +192,6 @@ export default function CourseMap() {
 
   useEffect(() => {
     if (recommendations && recommendations.length > 0) {
-      // eslint-disable-next-line
       setPlaces(recommendations.map((p, idx) => {
         const cleanName = p.name ? p.name.trim() : "";
         let dbTags = dbTagsMap[cleanName];
