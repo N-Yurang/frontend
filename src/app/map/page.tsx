@@ -175,26 +175,18 @@ export default function CourseMap() {
   const [dbTagsMap, setDbTagsMap] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
-    Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
-    ])
-      .then(([trendsData, hiddenData]) => {
-        let allPlaces: any[] = [];
-        if (trendsData?.status === "success") {
-          allPlaces = [...allPlaces, ...trendsData.data.places];
+    fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/places/filter`)
+      .then(res => res.json())
+      .then(data => {
+        if (data?.status === "success" && data.data?.places) {
+          const tagsMap: Record<string, string[]> = {};
+          data.data.places.forEach((p: any) => {
+            if (p.name && p.tags) {
+              tagsMap[p.name.trim()] = normalizeTags(p.tags);
+            }
+          });
+          setDbTagsMap(tagsMap);
         }
-        if (hiddenData?.status === "success") {
-          allPlaces = [...allPlaces, ...hiddenData.data.places];
-        }
-
-        const tagsMap: Record<string, string[]> = {};
-        allPlaces.forEach(p => {
-          if (p.name && p.tags) {
-            tagsMap[p.name.trim()] = normalizeTags(p.tags);
-          }
-        });
-        setDbTagsMap(tagsMap);
       })
       .catch(console.error);
   }, []);
