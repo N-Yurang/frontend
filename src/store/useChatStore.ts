@@ -171,7 +171,7 @@ export const useChatStore = create<ChatState>()(
           const errorMsg: Message = {
             id: (Date.now() + 1).toString(),
             role: "ai",
-            content: error.message === "로그인이 필요합니다."
+            content: (error as Error)?.message === "로그인이 필요합니다."
               ? "코스 저장을 위해서는 로그인이 필요해요! 로그인 후 다시 시도해 주시겠어요?"
               : "죄송해요, AI 플레이리스터 서버와 잠시 연결이 끊겼어요. 잠시 후 다시 시도해 주세요! 🎶",
           };
