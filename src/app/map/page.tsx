@@ -8,6 +8,8 @@ import {
   Shuffle,
   MapPin,
   Share2,
+  Bookmark,
+  Loader2,
   ChevronLeft,
   GripVertical,
   Edit3,
@@ -15,6 +17,7 @@ import {
 } from 'lucide-react';
 import { motion, Reorder, useDragControls } from 'framer-motion';
 import { useRecommendationStore, RecommendedPlace } from "@/store/useRecommendationStore";
+import { useChatStore } from "@/store/useChatStore";
 import { normalizeTags } from "@/utils/tagGrouper";
 
 // dynamically import leaflet component with ssr: false
@@ -24,7 +27,6 @@ const MapClient = dynamic(() => import('@/components/map/MapClient'), {
 });
 
 
-
 // CourseItem Component to handle drag controls and memo edit
 function CourseItem({
   place,
@@ -32,7 +34,7 @@ function CourseItem({
   selectedPlaceId,
   setSelectedPlaceId,
   saveMemoToState
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }: any) {
   const controls = useDragControls();
   const [isEditingMemo, setIsEditingMemo] = useState(false);
@@ -57,8 +59,8 @@ function CourseItem({
       dragListener={false}
       dragControls={controls}
       className={`relative rounded-3xl transition-all mb-3 overflow-hidden ${selectedPlaceId === place.id
-          ? "bg-brand-red/5 dark:bg-brand-red/10 ring-1 ring-brand-red/20"
-          : "bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
+        ? "bg-brand-red/5 dark:bg-brand-red/10 ring-1 ring-brand-red/20"
+        : "bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800"
         }`}
     >
       <div
@@ -161,7 +163,9 @@ function CourseItem({
 export default function CourseMap() {
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | number | null>(null);
   const [resetTrigger, setResetTrigger] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
 
+  const { recommendedItineraryId, currentCourseName, isBookmarked, setIsBookmarked } = useChatStore();
   const recommendations = useRecommendationStore((state) => state.recommendations);
   const setRecommendations = useRecommendationStore((state) => state.setRecommendations);
   const tripTitle = useRecommendationStore((state) => state.tripTitle);
@@ -205,7 +209,7 @@ export default function CourseMap() {
           const matchedKey = Object.keys(dbTagsMap).find(k => k.includes(cleanName) || cleanName.includes(k));
           if (matchedKey) dbTags = dbTagsMap[matchedKey];
         }
-        
+
         let finalTags = dbTags && dbTags.length > 0 ? dbTags : (p.tags || []);
         finalTags = normalizeTags(finalTags).filter((t: string) => !t.replace(/\s+/g, '').toLowerCase().includes('ai추천장소'));
 
@@ -297,6 +301,45 @@ export default function CourseMap() {
     saveToStore(shuffled);
   };
 
+  const handleSaveCourse = async () => {
+    if (!recommendedItineraryId) {
+      alert("저장할 코스가 없습니다. TRIPLY를 통해 먼저 코스를 추천받아주세요.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/courses/from-itinerary/${recommendedItineraryId}`;
+      const token = localStorage.getItem("triply_token");
+
+      const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          title: currentCourseName || tripTitle || "AI 추천 코스",
+          total_duration: null
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "코스 저장에 실패했습니다.");
+      }
+
+      alert("코스가 성공적으로 저장되었습니다!");
+      setIsBookmarked(true);
+    } catch (error) {
+      console.error("코스 저장 에러:", error);
+      alert("코스 저장에 실패했습니다. 다시 시도해 주세요.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F9FA] dark:bg-gray-950 pb-20 transition-colors duration-300">
       <header className="p-5 flex items-center justify-between">
@@ -304,8 +347,16 @@ export default function CourseMap() {
           <ChevronLeft size={24} />
         </button>
         <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">MY PLAYLIST</h1>
-        <button className="w-10 h-10 flex items-center justify-center text-gray-900 dark:text-white bg-white dark:bg-gray-900 rounded-full shadow-sm">
-          <Share2 size={20} />
+        <button
+          onClick={handleSaveCourse}
+          disabled={isSaving || isBookmarked}
+          className="w-10 h-10 flex items-center justify-center text-gray-900 dark:text-white bg-white dark:bg-gray-900 rounded-full shadow-sm disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
+        >
+          {isSaving ? (
+            <Loader2 size={20} className="animate-spin" />
+          ) : (
+            <Bookmark size={20} fill={isBookmarked ? "currentColor" : "none"} className={isBookmarked ? "text-gray-900 dark:text-white" : ""} />
+          )}
         </button>
       </header>
 
@@ -327,7 +378,7 @@ export default function CourseMap() {
         <section className="mb-6 relative group">
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100 mb-1">
-              {recommendations.length > 0 ? tripTitle : "부여 감성 당일치기"}
+              {recommendations.length > 0 ? (currentCourseName || tripTitle) : "부여 감성 당일치기"}
             </h2>
             <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
               <div className="flex items-center gap-1 text-brand-red">

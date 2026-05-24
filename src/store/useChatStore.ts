@@ -15,22 +15,30 @@ export interface ChatSession {
   messages: Message[];
   itinerary: RecommendedPlace[] | null;
   courseName: string | null;
+  recommendedItineraryId: number | null;
+  totalDistance: number | null;
 }
 
 interface ChatState {
   messages: Message[];
   currentItinerary: RecommendedPlace[] | null;
   currentCourseName: string | null;
+  recommendedItineraryId: string | null;
+  totalDistance: number | null;
   isLoading: boolean;
   pastSessions: ChatSession[];
   setMessages: (messages: Message[] | ((prev: Message[]) => Message[])) => void;
   setCurrentItinerary: (itinerary: RecommendedPlace[] | null) => void;
   setCurrentCourseName: (name: string | null) => void;
+  setRecommendedItineraryId: (id: string | null) => void;
+  setTotalDistance: (distance: number | null) => void;
   setIsLoading: (loading: boolean) => void;
   sendMessage: (input: string) => Promise<void>;
   clearChat: () => void;
   loadSession: (sessionId: string) => void;
   deleteSession: (sessionId: string) => void;
+  isBookmarked: boolean;
+  setIsBookmarked: (bookmarked: boolean) => void;
 }
 
 const initialMessages: Message[] = [
@@ -47,7 +55,10 @@ export const useChatStore = create<ChatState>()(
       messages: initialMessages,
       currentItinerary: null,
       currentCourseName: null,
+      recommendedItineraryId: null,
+      totalDistance: null,
       isLoading: false,
+      isBookmarked: false,
       pastSessions: [],
       setMessages: (updater) =>
         set((state) => ({
@@ -55,7 +66,10 @@ export const useChatStore = create<ChatState>()(
         })),
       setCurrentItinerary: (itinerary) => set({ currentItinerary: itinerary }),
       setCurrentCourseName: (name) => set({ currentCourseName: name }),
+      setRecommendedItineraryId: (id) => set({ recommendedItineraryId: id }),
+      setTotalDistance: (distance) => set({ totalDistance: distance }),
       setIsLoading: (loading) => set({ isLoading: loading }),
+      setIsBookmarked: (bookmarked) => set({ isBookmarked: bookmarked }),
       sendMessage: async (input: string) => {
         if (!input.trim() || get().isLoading) return;
 
@@ -69,23 +83,41 @@ export const useChatStore = create<ChatState>()(
         set({ isLoading: true });
 
         try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_AI_URL}/ai/recommend`, {
+          const token = localStorage.getItem("triply_token");
+          // 백엔드가 필수로 요구하는 travel_date 추가 (일단 오늘 날짜)
+          const today = new Date();
+          const travelDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/recommend`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: { 
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {})
+            },
             body: JSON.stringify({
               chat_history: [
                 { role: "user", content: input }
-              ]
+              ],
+              travel_date: travelDate
             }),
           });
 
-          if (!response.ok) {
-            throw new Error("서버 응답 에러");
+          if (response.status === 401 || response.status === 403) {
+            throw new Error("로그인이 필요합니다.");
           }
-          const data = await response.json();
+
+          if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.message || "서버 응답 에러");
+          }
+          const responseData = await response.json();
+          console.log("AI 응답 데이터:", responseData);
+          
+          // 백엔드는 결과를 { data: { ... } } 형태로 감싸서 보내므로 내부 데이터를 추출
+          const payload = responseData.data || responseData;
 
           // 응답 데이터가 아예 없거나 비어있는 경우 처리
-          if (!data || (!data.reply && (!data.itinerary || data.itinerary.length === 0))) {
+          if (!payload || (!payload.reply && (!payload.itinerary || payload.itinerary.length === 0))) {
             const noDataMsg: Message = {
               id: (Date.now() + 1).toString(),
               role: "ai",
@@ -96,30 +128,51 @@ export const useChatStore = create<ChatState>()(
             return;
           }
 
-          if (data.reply || data.itinerary) {
-            if (data.reply) {
+          // 새로운 추천 결과가 들어왔으므로 북마크 상태 초기화
+          set({ isBookmarked: false });
+
+          if (payload.reply || payload.itinerary) {
+            if (payload.reply) {
               const aiMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "ai",
-                content: data.reply,
+                content: payload.reply,
               };
               get().setMessages((prev) => [...prev, aiMsg]);
             }
 
-            if (data.itinerary && Array.isArray(data.itinerary) && data.itinerary.length > 0) {
-              set({ currentItinerary: data.itinerary });
+            if (payload.itinerary && Array.isArray(payload.itinerary) && payload.itinerary.length > 0) {
+              set({ currentItinerary: payload.itinerary });
             }
 
-            if (data.course_name) {
-              set({ currentCourseName: data.course_name });
+            let extractedName = payload.course_name;
+            if (!extractedName && payload.reply) {
+              const match = payload.reply.match(/맞게 '([^']+)' 기획을/);
+              if (match && match[1]) {
+                extractedName = match[1];
+              }
+            }
+
+            if (extractedName) {
+              set({ currentCourseName: extractedName });
+            }
+
+            if (payload.recommended_itinerary_id) {
+              set({ recommendedItineraryId: payload.recommended_itinerary_id.toString() });
+            }
+
+            if (payload.total_distance !== undefined) {
+              set({ totalDistance: payload.total_distance });
             }
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error("AI 연결 실패:", error);
           const errorMsg: Message = {
             id: (Date.now() + 1).toString(),
             role: "ai",
-            content: "죄송해요, AI 플레이리스터 서버와 잠시 연결이 끊겼어요. 잠시 후 다시 시도해 주세요! 🎶",
+            content: error.message === "로그인이 필요합니다."
+              ? "코스 저장을 위해서는 로그인이 필요해요! 로그인 후 다시 시도해 주시겠어요?"
+              : "죄송해요, AI 플레이리스터 서버와 잠시 연결이 끊겼어요. 잠시 후 다시 시도해 주세요! 🎶",
           };
           get().setMessages((prev) => [...prev, errorMsg]);
         } finally {
@@ -127,7 +180,7 @@ export const useChatStore = create<ChatState>()(
         }
       },
       clearChat: () => {
-        const { messages, currentItinerary, currentCourseName, pastSessions } = get();
+        const { messages, currentItinerary, currentCourseName, recommendedItineraryId, totalDistance, pastSessions } = get();
         if (messages.length > 1) {
           const firstUserMsg = messages.find(m => m.role === 'user')?.content || '새로운 대화';
           const title = currentCourseName || (firstUserMsg.length > 15 ? firstUserMsg.slice(0, 15) + '...' : firstUserMsg);
@@ -139,16 +192,29 @@ export const useChatStore = create<ChatState>()(
             messages: [...messages],
             itinerary: currentItinerary ? [...currentItinerary] : null,
             courseName: currentCourseName,
+            recommendedItineraryId,
+            totalDistance,
           };
           set({
             pastSessions: [newSession, ...pastSessions],
             messages: initialMessages,
             currentItinerary: null,
             currentCourseName: null,
-            isLoading: false
+            recommendedItineraryId: null,
+            totalDistance: null,
+            isLoading: false,
+            isBookmarked: false
           });
         } else {
-          set({ messages: initialMessages, currentItinerary: null, currentCourseName: null, isLoading: false });
+          set({ 
+            messages: initialMessages, 
+            currentItinerary: null, 
+            currentCourseName: null, 
+            recommendedItineraryId: null, 
+            totalDistance: null,
+            isLoading: false,
+            isBookmarked: false
+          });
         }
       },
       loadSession: (sessionId: string) => {
@@ -158,6 +224,8 @@ export const useChatStore = create<ChatState>()(
             messages: session.messages,
             currentItinerary: session.itinerary,
             currentCourseName: session.courseName || null,
+            recommendedItineraryId: session.recommendedItineraryId || null,
+            totalDistance: session.totalDistance || null,
             isLoading: false
           });
         }
