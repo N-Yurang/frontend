@@ -23,19 +23,7 @@ const MapClient = dynamic(() => import('@/components/map/MapClient'), {
   loading: () => <div className="h-[280px] w-full bg-gray-100 animate-pulse rounded-3xl flex items-center justify-center text-gray-400">지도 로딩 중...</div>
 });
 
-// 실제 DB 태그 (이미 통합 카테고리 형태로 저장됨)
-const DB_PLACE_TAGS: Record<string, string[]> = {
-  "청령포": ["여유/힐링", "혼자", "역사/건축", "걷기/산책"],
-  "백제문화단지": ["활기찬", "풍경/경관", "가족과함께", "역사/건축", "야경/노을"],
-  "남열해돋이해수욕장": ["활기찬", "감성/낭만", "친구와", "오션뷰", "사진명소"],
-  "젊은달와이파크": ["활기찬", "감성/낭만", "친구와", "사진명소", "이색/액티비티"],
-  "별마로천문대": ["감성/낭만", "커플", "야경/노을", "사진명소"],
-  "쑥섬 (애도)": ["감성/낭만", "여유/힐링", "가족과함께", "오션뷰", "풍경/경관"],
-  "연홍도": ["감성/낭만", "여유/힐링", "혼자", "사진명소", "걷기/산책"],
-  "무량사": ["여유/힐링", "혼자", "역사/건축", "걷기/산책"],
-  "나로도 편백숲": ["여유/힐링", "풍경/경관", "가족과함께", "걷기/산책"],
-  "반교리 돌담길": ["여유/힐링", "감성/낭만", "커플", "걷기/산책", "사진명소"],
-};
+
 
 // CourseItem Component to handle drag controls and memo edit
 function CourseItem({
@@ -180,12 +168,47 @@ export default function CourseMap() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [places, setPlaces] = useState<any[]>([]);
+  const [dbTagsMap, setDbTagsMap] = useState<Record<string, string[]>>({});
+
+  useEffect(() => {
+    Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
+    ])
+      .then(([trendsData, hiddenData]) => {
+        let allPlaces: any[] = [];
+        if (trendsData?.status === "success") {
+          allPlaces = [...allPlaces, ...trendsData.data.places];
+        }
+        if (hiddenData?.status === "success") {
+          allPlaces = [...allPlaces, ...hiddenData.data.places];
+        }
+
+        const tagsMap: Record<string, string[]> = {};
+        allPlaces.forEach(p => {
+          if (p.name && p.tags) {
+            tagsMap[p.name.trim()] = normalizeTags(p.tags);
+          }
+        });
+        setDbTagsMap(tagsMap);
+      })
+      .catch(console.error);
+  }, []);
 
   useEffect(() => {
     if (recommendations && recommendations.length > 0) {
       // eslint-disable-next-line
       setPlaces(recommendations.map((p, idx) => {
-        const dbTags = DB_PLACE_TAGS[p.name];
+        const cleanName = p.name ? p.name.trim() : "";
+        let dbTags = dbTagsMap[cleanName];
+        if (!dbTags) {
+          const matchedKey = Object.keys(dbTagsMap).find(k => k.includes(cleanName) || cleanName.includes(k));
+          if (matchedKey) dbTags = dbTagsMap[matchedKey];
+        }
+        
+        let finalTags = dbTags && dbTags.length > 0 ? dbTags : (p.tags || []);
+        finalTags = normalizeTags(finalTags).filter((t: string) => !t.replace(/\s+/g, '').toLowerCase().includes('ai추천장소'));
+
         return {
           id: p.name + p.lat + idx, // Unique string id for Reorder
           name: p.name,
@@ -193,7 +216,7 @@ export default function CourseMap() {
           duration: p.duration || "예정",
           lat: p.lat,
           lng: p.lng,
-          tags: dbTags && dbTags.length > 0 ? dbTags : (p.tags && p.tags.length > 0 ? p.tags : (p.type ? [p.type] : [])),
+          tags: finalTags,
           memo: p.memo || ""
         };
       }));
@@ -231,7 +254,7 @@ export default function CourseMap() {
         },
       ]);
     }
-  }, [recommendations]); // Re-sync if store changes externally
+  }, [recommendations, dbTagsMap]); // Re-sync if store or dbTagsMap changes externally
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saveToStore = (currentPlaces: any[]) => {
