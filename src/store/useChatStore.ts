@@ -15,7 +15,7 @@ export interface ChatSession {
   messages: Message[];
   itinerary: RecommendedPlace[] | null;
   courseName: string | null;
-  recommendedItineraryId: number | null;
+  recommendedItineraryId: string | null;
   totalDistance: number | null;
 }
 
