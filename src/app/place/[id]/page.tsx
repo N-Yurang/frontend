@@ -150,16 +150,20 @@ export default function PlaceDetail() {
               <ShareIcon />
             </button>
             <button
-              onClick={() => toggleItem({
+              onPointerDown={() => toggleItem({
                 id: `place-${place.place_id}`,
                 type: 'place',
                 name: place.name,
                 location: place.location,
                 image_url: place.image_url
               })}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+              }}
               className="w-[40px] h-[40px] bg-[#2C2C2C]/60 shadow-md rounded-full flex justify-center items-center backdrop-blur-sm"
             >
-              <Heart className={`w-[24px] h-[24px] transition-colors ${isSaved(`place-${place.place_id}`) ? "text-[#FA5252] fill-[#FA5252]" : "text-white"}`} />
+              <Heart className={`w-[24px] h-[24px] ${isSaved(`place-${place.place_id}`) ? "text-[#FA5252] fill-[#FA5252]" : "text-white"}`} />
             </button>
           </div>
         </div>

@@ -88,9 +88,15 @@ export default function MyPage() {
   const isMounted = useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
   const savedItems = useSavedStore((state) => state.savedItems);
   const toggleItem = useSavedStore((state) => state.toggleItem);
+  const deletedPlaylistIds = useSavedStore((state) => state.deletedPlaylistIds || []);
+  const deletePlaylist = useSavedStore((state) => state.deletePlaylist);
   const savedPlaces = isMounted && Array.isArray(savedItems)
     ? savedItems.filter((i) => i?.type === 'place')
     : [];
+  
+  const visiblePlaylists = isMounted && Array.isArray(deletedPlaylistIds)
+    ? playlists.filter((pl) => !deletedPlaylistIds.includes(pl.course_id))
+    : playlists;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -194,7 +200,7 @@ export default function MyPage() {
   if (view === 'savedPlaces') {
     return (
       <div className="flex flex-col min-h-screen bg-[#F8F9FA] dark:bg-gray-950 pb-20">
-        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10">
+        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-30">
           <button onClick={() => setView('main')} className="p-1 -ml-1 text-gray-900 dark:text-white">
             <ChevronLeft size={24} />
           </button>
@@ -249,7 +255,7 @@ export default function MyPage() {
   if (view === 'savedPlaylists') {
     return (
       <div className="flex flex-col min-h-screen bg-[#F8F9FA] dark:bg-gray-950 pb-20">
-        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10">
+        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-30">
           <button onClick={() => setView('main')} className="p-1 -ml-1 text-gray-900 dark:text-white">
             <ChevronLeft size={24} />
           </button>
@@ -260,7 +266,7 @@ export default function MyPage() {
         </div>
         <div className="flex-1 overflow-y-auto px-5 pt-4 pb-10">
           <div className="grid grid-cols-2 gap-4">
-            {playlists.map(pl => (
+            {visiblePlaylists.map(pl => (
               <div key={pl.course_id} className="flex flex-col relative group bg-white dark:bg-gray-900 rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-800 pb-3">
                 <div className="w-full h-[120px] bg-gray-100 dark:bg-gray-800 relative">
                   <CourseCollage images={pl.images || (pl.thumbnail_url ? [pl.thumbnail_url] : [])} />
@@ -288,7 +294,7 @@ export default function MyPage() {
               </div>
             ))}
           </div>
-          {playlists.length === 0 && (
+          {visiblePlaylists.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="text-[14px] text-gray-400">저장한 플리가 없습니다.</p>
             </div>
@@ -310,7 +316,7 @@ export default function MyPage() {
                 </button>
                 <button 
                   onClick={() => {
-                    setPlaylists(playlists.filter(pl => pl.course_id !== deletingPlaylistId));
+                    deletePlaylist(deletingPlaylistId!);
                     setDeletingPlaylistId(null);
                   }}
                   className="flex-1 py-3.5 rounded-2xl bg-[#FF4B4B] hover:bg-red-600 text-white font-bold text-[15px] active:scale-95 transition-all shadow-md shadow-red-500/20"
@@ -329,7 +335,7 @@ export default function MyPage() {
     return (
       <div className="flex flex-col min-h-screen bg-[#F8F9FA] dark:bg-gray-950 pb-20">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-10">
+        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-30">
           <button onClick={() => setView('main')} className="p-1 -ml-1 text-gray-900 dark:text-white">
             <ChevronLeft size={24} />
           </button>
@@ -411,7 +417,7 @@ export default function MyPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#F8F9FA] dark:bg-gray-950 pb-20">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 pt-4 pb-4 sticky top-0 z-10 bg-[#F8F9FA] dark:bg-gray-950">
+      <div className="flex items-center justify-between px-5 pt-4 pb-4 sticky top-0 z-30 bg-[#F8F9FA] dark:bg-gray-950">
         <h1 className="text-xl font-bold text-gray-900 dark:text-white">마이페이지</h1>
         <button onClick={() => setView('settings')} className="text-gray-800 dark:text-white">
           <Settings size={24} />
@@ -445,7 +451,7 @@ export default function MyPage() {
           {/* Stats */}
           <div className="flex justify-between items-center px-2">
             <div className="flex flex-col items-center">
-              <span className="text-[20px] font-bold text-gray-900 dark:text-white leading-tight">{playlists.length}</span>
+              <span className="text-[20px] font-bold text-gray-900 dark:text-white leading-tight">{visiblePlaylists.length}</span>
               <span className="text-[11px] text-gray-400 mt-0.5">저장한 플리</span>
             </div>
             <div className="w-px h-8 bg-gray-100 dark:bg-gray-800" />
@@ -525,7 +531,7 @@ export default function MyPage() {
           </div>
 
           <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-4">
-            {playlists.length > 0 ? playlists.map(pl => (
+            {visiblePlaylists.length > 0 ? visiblePlaylists.map(pl => (
               <div key={pl.course_id} className="min-w-[160px] w-[160px] flex flex-col shrink-0 bg-white dark:bg-gray-800 rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-700">
                 <div className="w-full h-[100px] bg-gray-100 dark:bg-gray-700">
                   <CourseCollage images={pl.images || (pl.thumbnail_url ? [pl.thumbnail_url] : [])} />

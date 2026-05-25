@@ -376,7 +376,7 @@ export default function Home() {
 
                         {/* Like Button */}
                         <button
-                          onClick={(e) => {
+                          onPointerDown={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
                             toggleItem({
@@ -387,11 +387,15 @@ export default function Home() {
                               image_url: getAssetUrl(item.image_url)
                             });
                           }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
                           className="absolute top-4 right-4 z-20 w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-white/40 active:scale-95"
                         >
                           <Heart
                             size={20}
-                            className={`transition-colors ${isSaved(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                            className={`${isSaved(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
                           />
                         </button>
 
@@ -475,7 +479,7 @@ export default function Home() {
 
                       {/* Like Button */}
                       <button
-                        onClick={(e) => {
+                        onPointerDown={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           toggleItem({
@@ -486,11 +490,15 @@ export default function Home() {
                             image_url: getAssetUrl(item.image_url)
                           });
                         }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
                       >
                         <Heart
                           size={16}
-                          className={`transition-colors ${isSaved(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                          className={`${isSaved(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
                         />
                       </button>
 
@@ -631,7 +639,7 @@ export default function Home() {
 
                       {/* Like Button */}
                       <button
-                        onClick={(e) => {
+                        onPointerDown={(e) => {
                           e.preventDefault();
                           e.stopPropagation();
                           toggleItem({
@@ -642,11 +650,15 @@ export default function Home() {
                             image_url: imageUrl || ""
                           });
                         }}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                        }}
                         className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
                       >
                         <Heart
                           size={16}
-                          className={`transition-colors ${isSaved(`festival-${item.festival_id || item.id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                          className={`${isSaved(`festival-${item.festival_id || item.id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
                         />
                       </button>
 
