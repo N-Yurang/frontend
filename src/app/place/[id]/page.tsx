@@ -67,6 +67,7 @@ export default function PlaceDetail() {
 
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const isSaved = useSavedStore((state) => state.isSaved);
+  const savedItems = useSavedStore((state) => state.savedItems);
 
   useEffect(() => {
     Promise.all([

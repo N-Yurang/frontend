@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import Link from "next/link";
 import { normalizeTags } from "@/utils/tagGrouper";
+import { useSavedStore } from "@/store/useSavedStore";
 
 interface Place {
   place_id: number;
@@ -21,6 +22,10 @@ export default function TrendingPage() {
   const [activeTab, setActiveTab] = useState("드라마 속 그곳");
 
   const tabs = ["드라마 속 그곳", "예능 촬영지", "영화 속 장소"];
+
+  const toggleItem = useSavedStore((state) => state.toggleItem);
+  const isSaved = useSavedStore((state) => state.isSaved);
+  const savedItems = useSavedStore((state) => state.savedItems);
 
   const [trendPlaces, setTrendPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,10 +111,24 @@ export default function TrendingPage() {
 
               {/* Heart Button */}
               <button
-                onClick={(e) => e.preventDefault()}
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  toggleItem({
+                    id: `place-${place.place_id}`,
+                    type: 'place',
+                    name: place.name || place.location,
+                    location: place.location,
+                    image_url: place.image_url?.startsWith('http') ? place.image_url : `${process.env.NEXT_PUBLIC_API_URL}${place.image_url}`
+                  });
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
                 className="absolute top-3 right-3 w-8 h-8 bg-black/30 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-black/40 transition-colors"
               >
-                <Heart size={16} className="text-white" />
+                <Heart size={16} className={`${isSaved(`place-${place.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`} />
               </button>
             </div>
 
