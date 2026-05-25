@@ -5,8 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { Heart, MapPin, Clock } from "lucide-react";
 import Image from "next/image";
 import { useSavedStore } from "@/store/useSavedStore";
+import { useChatStore } from "@/store/useChatStore";
 
 import { normalizeTags } from "@/utils/tagGrouper";
+import { appendEulReul } from "@/utils/korean";
 
 interface PlaceData {
   place_id: string | number;
@@ -68,6 +70,8 @@ export default function PlaceDetail() {
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const isSaved = useSavedStore((state) => state.isSaved);
   const savedItems = useSavedStore((state) => state.savedItems);
+  const clearChat = useChatStore((state) => state.clearChat);
+  const sendMessage = useChatStore((state) => state.sendMessage);
 
   useEffect(() => {
     Promise.all([
@@ -277,12 +281,18 @@ export default function PlaceDetail() {
         <div className="w-full mt-10 pb-[30px] flex justify-center z-30">
           <div className="w-full pointer-events-auto">
             <button
-              onClick={() => router.push('/chat')}
+              onClick={() => {
+                clearChat();
+                if (place.name) {
+                  sendMessage(`${appendEulReul(place.name)} 포함해서 코스를 짜줘`);
+                }
+                router.push('/chat');
+              }}
               className="w-full h-[52px] rounded-[15px] bg-gradient-to-r from-[#FA5654] to-[#FF8970] flex justify-center items-center gap-[13px] transition-transform active:scale-95 shadow-lg shadow-[#FA5654]/20"
             >
               <CourseUpIcon />
               <span className="text-[16px] font-extrabold font-['Inter'] text-white">
-                AI 챗봇으로 코스 짜기
+                이걸로 코스 짜기
               </span>
             </button>
           </div>

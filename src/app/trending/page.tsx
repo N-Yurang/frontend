@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { normalizeTags } from "@/utils/tagGrouper";
 import { useSavedStore } from "@/store/useSavedStore";
+import { useChatStore } from "@/store/useChatStore";
+import { appendEulReul } from "@/utils/korean";
 
 interface Place {
   place_id: number;
@@ -26,6 +28,8 @@ export default function TrendingPage() {
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const isSaved = useSavedStore((state) => state.isSaved);
   const savedItems = useSavedStore((state) => state.savedItems);
+  const clearChat = useChatStore((state) => state.clearChat);
+  const sendMessage = useChatStore((state) => state.sendMessage);
 
   const [trendPlaces, setTrendPlaces] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,7 +152,15 @@ export default function TrendingPage() {
               <div className="w-full h-[1px] bg-[#E8E7E2] my-4" />
 
               <button
-                onClick={(e) => { e.preventDefault(); router.push('/chat'); }}
+                onClick={(e) => { 
+                  e.preventDefault(); 
+                  clearChat();
+                  const placeName = place.name || place.location;
+                  if (placeName) {
+                    sendMessage(`${appendEulReul(placeName)} 포함해서 코스를 짜줘`);
+                  }
+                  router.push('/chat'); 
+                }}
                 className="w-full h-11 bg-gradient-to-br from-[#FA5252] to-[#FF8E73] rounded-xl flex items-center justify-center gap-2 text-white font-semibold text-[14px] hover:opacity-90 transition-opacity"
               >
                 <Navigation size={18} className="fill-white" />
