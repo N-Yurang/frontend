@@ -4,7 +4,10 @@ import { useState, useEffect, useSyncExternalStore } from "react";
 import { Settings, Edit2, ChevronRight, CheckCircle2, Plus, FileText, HelpCircle, LogOut, Bell, ChevronLeft, MapPin, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useSavedStore } from "@/store/useSavedStore";
+import { useChatStore } from "@/store/useChatStore";
+import { useRouter } from "next/navigation";
 import { normalizeTags } from "@/utils/tagGrouper";
+import Link from "next/link";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -74,7 +77,10 @@ const CourseCollage = ({ images }: { images: string[] }) => {
 };
 
 export default function MyPage() {
-  const [view, setView] = useState<'main' | 'settings' | 'savedPlaces' | 'savedPlaylists'>('main');
+  const [view, setView] = useState<'main' | 'settings' | 'savedPlaces' | 'savedPlaylists' | 'playlistDetail'>('main');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedPlaylist, setSelectedPlaylist] = useState<any>(null);
+  const router = useRouter();
   const [deletingPlaylistId, setDeletingPlaylistId] = useState<number | null>(null);
   const [userName, setUserName] = useState("로딩중...");
   const [userId, setUserId] = useState("loading...");
@@ -145,7 +151,7 @@ export default function MyPage() {
                   const places = detailData.data?.course?.places || [];
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const images = places.map((p: any) => p.image_url).filter(Boolean);
-                  return { ...c, images };
+                  return { ...c, images, places };
                 }
               } catch {
                 // Ignore error
@@ -212,7 +218,7 @@ export default function MyPage() {
         <div className="flex-1 overflow-y-auto px-5 pt-4 pb-10">
           <div className="grid grid-cols-2 gap-4">
             {savedPlaces.map(place => (
-              <div key={place.id} className="flex flex-col relative group">
+              <Link href={`/place/${place.id.replace(/^(place-|festival-)/, '')}`} key={place.id} className="flex flex-col relative group">
                 <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative shadow-sm">
                   {place.image_url ? (
                     <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
@@ -239,7 +245,7 @@ export default function MyPage() {
                     <MapPin size={10} className="text-[#FF4B4B]" /> {place.location}
                   </p>
                 )}
-              </div>
+              </Link>
             ))}
           </div>
           {savedPlaces.length === 0 && (
@@ -247,6 +253,84 @@ export default function MyPage() {
               <p className="text-[14px] text-gray-400">찜한 장소가 없습니다.</p>
             </div>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  if (view === 'playlistDetail' && selectedPlaylist) {
+    return (
+      <div className="flex flex-col min-h-screen bg-[#F8F9FA] dark:bg-gray-950 pb-[100px]">
+        <div className="flex items-center justify-between px-5 pt-4 pb-4 bg-white dark:bg-gray-950 sticky top-0 z-30">
+          <button onClick={() => setView('main')} className="p-1 -ml-1 text-gray-900 dark:text-white">
+            <ChevronLeft size={24} />
+          </button>
+          <h1 className="text-[17px] font-bold text-gray-900 dark:text-white absolute left-1/2 -translate-x-1/2 w-[60%] text-center truncate">
+            {selectedPlaylist.title}
+          </h1>
+          <div className="w-6" />
+        </div>
+        <div className="flex-1 overflow-y-auto px-5 pt-4 pb-10">
+          <div className="grid grid-cols-2 gap-4">
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+            {selectedPlaylist.places?.map((place: any) => (
+              <Link href={`/place/${place.place_id}`} key={place.place_id} className="flex flex-col relative group">
+                <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative shadow-sm">
+                  {place.image_url ? (
+                    <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
+                      <span className="text-[11px] text-gray-400">이미지 없음</span>
+                    </div>
+                  )}
+                </div>
+                <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{place.name}</h4>
+                {place.location && (
+                  <p className="text-[11px] text-gray-400 truncate flex items-center gap-0.5 mt-0.5">
+                    <MapPin size={10} className="text-[#FF4B4B]" /> {place.location}
+                  </p>
+                )}
+              </Link>
+            ))}
+          </div>
+          {(!selectedPlaylist.places || selectedPlaylist.places.length === 0) && (
+            <div className="flex flex-col items-center justify-center py-20 text-center">
+              <p className="text-[14px] text-gray-400">플리에 포함된 장소가 없습니다.</p>
+            </div>
+          )}
+        </div>
+        
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-full max-w-[440px] px-5">
+          <button 
+            onClick={() => {
+              if (!selectedPlaylist.places || selectedPlaylist.places.length === 0) return;
+              const chatStore = useChatStore.getState();
+              chatStore.setCurrentItinerary(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                selectedPlaylist.places.map((p: any) => ({
+                  id: String(p.place_id),
+                  name: p.name,
+                  location: p.location,
+                  latitude: p.latitude,
+                  longitude: p.longitude,
+                  image_url: p.image_url,
+                  category: p.category,
+                  description: p.description,
+                  tags: p.tags,
+                  festival_score: p.festival_score,
+                  trend_score: p.trend_score,
+                  visit_order: p.visit_order,
+                  memo: p.memo,
+                }))
+              );
+              chatStore.setCurrentCourseName(selectedPlaylist.title);
+              chatStore.setTotalDistance(selectedPlaylist.total_distance_km || selectedPlaylist.total_distance || null);
+              router.push('/map');
+            }}
+            className="w-full bg-[#FF4B4B] hover:bg-red-500 text-white font-bold py-4 rounded-full shadow-lg shadow-[#FF4B4B]/30 transition-all flex justify-center items-center h-[56px] text-[16px]"
+          >
+            지도 코스로 보기
+          </button>
         </div>
       </div>
     );
@@ -267,11 +351,21 @@ export default function MyPage() {
         <div className="flex-1 overflow-y-auto px-5 pt-4 pb-10">
           <div className="grid grid-cols-2 gap-4">
             {visiblePlaylists.map(pl => (
-              <div key={pl.course_id} className="flex flex-col relative group bg-white dark:bg-gray-900 rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-800 pb-3">
+              <div 
+                key={pl.course_id} 
+                onClick={() => {
+                  setSelectedPlaylist(pl);
+                  setView('playlistDetail');
+                }}
+                className="flex flex-col relative group bg-white dark:bg-gray-900 rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-800 pb-3 cursor-pointer"
+              >
                 <div className="w-full h-[120px] bg-gray-100 dark:bg-gray-800 relative">
                   <CourseCollage images={pl.images || (pl.thumbnail_url ? [pl.thumbnail_url] : [])} />
                   <button 
-                    onClick={() => setDeletingPlaylistId(pl.course_id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeletingPlaylistId(pl.course_id);
+                    }}
                     className="absolute top-2 right-2 w-7 h-7 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-[#FF4B4B]/90 transition-colors z-10 active:scale-95 shadow-md"
                   >
                     <X size={14} className="text-white" />
@@ -532,7 +626,14 @@ export default function MyPage() {
 
           <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-4">
             {visiblePlaylists.length > 0 ? visiblePlaylists.map(pl => (
-              <div key={pl.course_id} className="min-w-[160px] w-[160px] flex flex-col shrink-0 bg-white dark:bg-gray-800 rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-700">
+              <div 
+                key={pl.course_id} 
+                onClick={() => {
+                  setSelectedPlaylist(pl);
+                  setView('playlistDetail');
+                }}
+                className="min-w-[160px] w-[160px] flex flex-col shrink-0 bg-white dark:bg-gray-800 rounded-[20px] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden border border-gray-50 dark:border-gray-700 cursor-pointer"
+              >
                 <div className="w-full h-[100px] bg-gray-100 dark:bg-gray-700">
                   <CourseCollage images={pl.images || (pl.thumbnail_url ? [pl.thumbnail_url] : [])} />
                 </div>
@@ -571,7 +672,7 @@ export default function MyPage() {
           {savedPlaces.length > 0 ? (
             <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-2">
               {savedPlaces.map(place => (
-                <div key={place.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
+                <Link href={`/place/${place.id.replace(/^(place-|festival-)/, '')}`} key={place.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
                   <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative">
                     {place.image_url ? (
                       <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
@@ -587,7 +688,7 @@ export default function MyPage() {
                       <MapPin size={10} className="text-[#FF4B4B]" /> {place.location}
                     </p>
                   )}
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

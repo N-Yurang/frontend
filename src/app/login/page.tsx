@@ -61,10 +61,6 @@ export default function Login() {
     }
   };
 
-  const handleDummyLogin = () => {
-    localStorage.setItem("triply_token", "dummy-token-1234");
-    router.push("/home");
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-white dark:bg-gray-950 transition-colors">
@@ -158,14 +154,7 @@ export default function Login() {
               {isLoading ? <Loader2 className="animate-spin" size={24} /> : "로그인"}
             </button>
             
-            <button
-              type="button"
-              onClick={handleDummyLogin}
-              className="mt-3 w-full bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 font-bold py-4 rounded-xl transition-all flex justify-center items-center h-[56px] text-[16px]"
-            >
-              더미 로그인 (테스트용)
-            </button>
-            
+
           </form>
 
           <div className="mt-8 text-center">

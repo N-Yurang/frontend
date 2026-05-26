@@ -166,7 +166,6 @@ export const useChatStore = create<ChatState>()(
             }
           }
         } catch (error: unknown) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           console.error("AI 연결 실패:", error);
           const errorMsg: Message = {
             id: (Date.now() + 1).toString(),
