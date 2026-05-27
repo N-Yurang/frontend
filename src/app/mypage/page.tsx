@@ -22,7 +22,7 @@ function getAssetUrl(path?: string) {
   return API_BASE_URL ? `${API_BASE_URL}${path}` : path;
 }
 
-const emptySubscribe = () => () => {};
+const emptySubscribe = () => () => { };
 const getClientSnapshot = () => true;
 const getServerSnapshot = () => false;
 
@@ -49,7 +49,7 @@ const CourseCollage = ({ images }: { images: string[] }) => {
       </div>
     );
   }
-  
+
   const urls = images.map(getAssetUrl);
 
   if (urls.length === 1) {
@@ -81,7 +81,7 @@ export default function MyPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedPlaylist, setSelectedPlaylist] = useState<any>(null);
   const router = useRouter();
-  const [deletingPlaylistId, setDeletingPlaylistId] = useState<number | null>(null);
+  const [deletingPlaylistId, setDeletingPlaylistId] = useState<number | string | null>(null);
   const [userName, setUserName] = useState("로딩중...");
   const [userId, setUserId] = useState("loading...");
   const [tags, setTags] = useState<string[]>([]);
@@ -94,15 +94,11 @@ export default function MyPage() {
   const isMounted = useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
   const savedItems = useSavedStore((state) => state.savedItems);
   const toggleItem = useSavedStore((state) => state.toggleItem);
-  const deletedPlaylistIds = useSavedStore((state) => state.deletedPlaylistIds || []);
-  const deletePlaylist = useSavedStore((state) => state.deletePlaylist);
   const savedPlaces = isMounted && Array.isArray(savedItems)
     ? savedItems.filter((i) => i?.type === 'place')
     : [];
-  
-  const visiblePlaylists = isMounted && Array.isArray(deletedPlaylistIds)
-    ? playlists.filter((pl) => !deletedPlaylistIds.includes(pl.course_id))
-    : playlists;
+
+  const visiblePlaylists = playlists;
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -137,7 +133,7 @@ export default function MyPage() {
         if (courseRes.ok) {
           const courseData = await courseRes.json();
           const courses = Array.isArray(courseData.data?.courses) ? courseData.data.courses : [];
-          
+
           // N+1 Fetch to get multiple images
           const coursesWithDetails = await Promise.all(
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -228,7 +224,7 @@ export default function MyPage() {
                     </div>
                   )}
                   {/* Immediate Delete Button */}
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -402,15 +398,28 @@ export default function MyPage() {
               <h3 className="text-[18px] font-bold text-gray-900 dark:text-white mb-2 text-center">삭제하시겠습니까?</h3>
               <p className="text-[13px] text-gray-500 dark:text-gray-400 mb-6 text-center">선택한 플레이리스트가 목록에서 영구적으로 삭제됩니다.</p>
               <div className="flex gap-3">
-                <button 
+                <button
                   onClick={() => setDeletingPlaylistId(null)}
                   className="flex-1 py-3.5 rounded-2xl bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-bold text-[15px] active:scale-95 transition-all"
                 >
                   취소
                 </button>
-                <button 
-                  onClick={() => {
-                    deletePlaylist(deletingPlaylistId!);
+                <button
+                  onClick={async () => {
+                    if (deletingPlaylistId) {
+                      try {
+                        const token = localStorage.getItem("triply_token");
+                        const res = await fetch(getApiUrl(`/api/courses/${deletingPlaylistId}`) || '', {
+                          method: 'DELETE',
+                          headers: { Authorization: `Bearer ${token}` }
+                        });
+                        if (res.ok) {
+                          setPlaylists(prev => prev.filter(p => p.course_id !== deletingPlaylistId));
+                        }
+                      } catch (err) {
+                        console.error('Failed to delete playlist:', err);
+                      }
+                    }
                     setDeletingPlaylistId(null);
                   }}
                   className="flex-1 py-3.5 rounded-2xl bg-[#FF4B4B] hover:bg-red-600 text-white font-bold text-[15px] active:scale-95 transition-all shadow-md shadow-red-500/20"
@@ -528,7 +537,7 @@ export default function MyPage() {
                 {userName.charAt(0)}
               </span>
             </div>
-            
+
             {/* Info */}
             <div className="flex flex-col flex-1">
               <h2 className="text-[18px] font-bold text-gray-900 dark:text-white mb-1">{userName}</h2>
@@ -571,7 +580,7 @@ export default function MyPage() {
               <button onClick={() => setIsEditingTags(true)} className="text-[13px] font-medium text-[#FF4B4B]">수정</button>
             )}
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
             {tags.map(tag => (
               <div key={tag} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#FF4B4B] bg-white dark:bg-gray-900 text-[#FF4B4B]">
@@ -707,7 +716,7 @@ export default function MyPage() {
             </div>
             <ChevronRight size={18} className="text-gray-300" />
           </button>
-          
+
           <button className="w-full flex items-center justify-between p-5 border-b border-gray-50 dark:border-gray-800 active:bg-gray-50 dark:active:bg-gray-800 transition-colors">
             <div className="flex items-center gap-3">
               <Bell size={20} className="text-gray-700 dark:text-gray-300" />
