@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, User, Lock, Mail, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useChatStore } from "@/store/useChatStore";
+import { useRecommendationStore } from "@/store/useRecommendationStore";
+import { useSavedStore } from "@/store/useSavedStore";
 
 export default function Signup() {
   const router = useRouter();
@@ -62,6 +65,11 @@ export default function Signup() {
           const loginData = await loginRes.json();
           if (loginRes.ok && loginData.status === "success") {
             localStorage.setItem("triply_token", loginData.data.token);
+            localStorage.removeItem("saved-storage");
+            localStorage.removeItem("saved-course-storage");
+            useChatStore.getState().resetForNewUser();
+            useRecommendationStore.getState().resetForNewUser();
+            useSavedStore.getState().clearSavedItems();
             setSuccessMsg("회원가입이 완료되었습니다! 내 취향을 알려주세요.");
             setTimeout(() => router.push("/onboarding"), 1500);
             return;

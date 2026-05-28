@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useChatStore } from "@/store/useChatStore";
+import { useRecommendationStore } from "@/store/useRecommendationStore";
+import { useSavedStore } from "@/store/useSavedStore";
 
 export default function Login() {
   const router = useRouter();
@@ -47,6 +50,11 @@ export default function Login() {
         
         // Save token to localStorage for subsequent API requests
         localStorage.setItem("triply_token", token);
+        localStorage.removeItem("saved-storage");
+        localStorage.removeItem("saved-course-storage");
+        useChatStore.getState().resetForNewUser();
+        useRecommendationStore.getState().resetForNewUser();
+        useSavedStore.getState().clearSavedItems();
         
         // Force route to home on login as requested
         router.push("/home");

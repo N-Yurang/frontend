@@ -144,6 +144,7 @@ export default function Home() {
 
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const isSaved = useSavedStore((state) => state.isSaved);
+  const loadSavedItems = useSavedStore((state) => state.loadSavedItems);
 
   const getFestivalDescription = (month: number) => {
     if (month >= 3 && month <= 5) {
@@ -216,6 +217,10 @@ export default function Home() {
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    loadSavedItems();
+  }, [loadSavedItems]);
 
   // Fetch trends and hidden places once on mount
   useEffect(() => {
@@ -662,12 +667,13 @@ export default function Home() {
                         />
                       </button>
 
-                      <div className="absolute top-3 left-3 bg-white/90 dark:bg-black/80 px-2 py-1 rounded-lg text-[10px] font-black text-gray-900 dark:text-white transition-colors">
-                        D-DAY
-                      </div>
                     </div>
-                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] mb-0.5 transition-colors">{title}</h3>
-                    <p className="text-[11px] text-gray-400 font-medium">{dateStr}</p>
+                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] mb-1.5 transition-colors line-clamp-1">{title}</h3>
+                    {dateStr && (
+                      <div className="inline-flex w-fit items-center rounded-full bg-brand-red/10 px-2.5 py-1 text-[12px] font-black text-brand-red ring-1 ring-brand-red/15">
+                        {dateStr}
+                      </div>
+                    )}
                   </motion.div>
                 );
               })

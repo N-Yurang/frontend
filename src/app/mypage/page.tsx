@@ -5,6 +5,7 @@ import { Settings, Edit2, ChevronRight, CheckCircle2, Plus, FileText, HelpCircle
 import { useTheme } from "next-themes";
 import { useSavedStore } from "@/store/useSavedStore";
 import { useChatStore } from "@/store/useChatStore";
+import { useRecommendationStore, RecommendedPlace } from "@/store/useRecommendationStore";
 import { useRouter } from "next/navigation";
 import { normalizeTags } from "@/utils/tagGrouper";
 import Link from "next/link";
@@ -39,6 +40,34 @@ function formatDuration(minutes: number | null | undefined) {
   if (h > 0 && m > 0) return `${h}시간 ${m}분`;
   if (h > 0) return `${h}시간`;
   return `${m}분`;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapPlaylistPlacesToRecommendations(places: any[]): RecommendedPlace[] {
+  const recommendations: RecommendedPlace[] = [];
+
+  places.forEach((place, index) => {
+    const lat = Number(place.lat ?? place.latitude);
+    const lng = Number(place.lng ?? place.longitude);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+
+    recommendations.push({
+      order: Number(place.visit_order ?? place.order ?? index + 1),
+      place_id: place.place_id,
+      name: String(place.name || place.title || "이름 없는 장소"),
+      lat,
+      lng,
+      type: String(place.category || place.type || "저장한 장소"),
+      desc: String(place.description || place.desc || place.category || "저장한 장소"),
+      image_url: place.image_url,
+      category: place.category,
+      tags: Array.isArray(place.tags) ? normalizeTags(place.tags) : [],
+      memo: place.memo || "",
+    });
+  });
+
+  return recommendations.sort((a, b) => a.order - b.order);
 }
 
 const CourseCollage = ({ images }: { images: string[] }) => {
@@ -94,6 +123,7 @@ export default function MyPage() {
   const isMounted = useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot);
   const savedItems = useSavedStore((state) => state.savedItems);
   const toggleItem = useSavedStore((state) => state.toggleItem);
+  const clearSavedItems = useSavedStore((state) => state.clearSavedItems);
   const savedPlaces = isMounted && Array.isArray(savedItems)
     ? savedItems.filter((i) => i?.type === 'place')
     : [];
@@ -158,6 +188,7 @@ export default function MyPage() {
           );
           setPlaylists(coursesWithDetails);
         }
+        await useSavedStore.getState().loadSavedItems();
       } catch (err) {
         console.error("Failed to fetch user data:", err);
       }
@@ -197,6 +228,15 @@ export default function MyPage() {
 
   const handleRemoveTag = (tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("triply_token");
+    localStorage.removeItem("saved-storage");
+    localStorage.removeItem("saved-course-storage");
+    useChatStore.getState().resetForNewUser();
+    clearSavedItems();
+    router.replace("/login");
   };
 
   if (view === 'savedPlaces') {
@@ -300,26 +340,16 @@ export default function MyPage() {
           <button 
             onClick={() => {
               if (!selectedPlaylist.places || selectedPlaylist.places.length === 0) return;
+              const recommendations = mapPlaylistPlacesToRecommendations(selectedPlaylist.places);
+              if (recommendations.length === 0) return;
+
               const chatStore = useChatStore.getState();
-              chatStore.setCurrentItinerary(
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                selectedPlaylist.places.map((p: any) => ({
-                  id: String(p.place_id),
-                  name: p.name,
-                  location: p.location,
-                  latitude: p.latitude,
-                  longitude: p.longitude,
-                  image_url: p.image_url,
-                  category: p.category,
-                  description: p.description,
-                  tags: p.tags,
-                  festival_score: p.festival_score,
-                  trend_score: p.trend_score,
-                  visit_order: p.visit_order,
-                  memo: p.memo,
-                }))
-              );
+              useRecommendationStore.getState().setRecommendations(recommendations, selectedPlaylist.title);
+              chatStore.setCurrentItinerary(recommendations);
               chatStore.setCurrentCourseName(selectedPlaylist.title);
+              chatStore.setRecommendedItineraryId(null);
+              chatStore.setSavedCourseId(selectedPlaylist.course_id ? String(selectedPlaylist.course_id) : null);
+              chatStore.setIsBookmarked(Boolean(selectedPlaylist.course_id));
               chatStore.setTotalDistance(selectedPlaylist.total_distance_km || selectedPlaylist.total_distance || null);
               router.push('/map');
             }}
@@ -741,7 +771,7 @@ export default function MyPage() {
             <ChevronRight size={18} className="text-gray-300" />
           </button>
 
-          <button className="w-full flex items-center justify-between p-5 active:bg-red-50 dark:active:bg-red-950/20 transition-colors">
+          <button onClick={handleLogout} className="w-full flex items-center justify-between p-5 active:bg-red-50 dark:active:bg-red-950/20 transition-colors">
             <div className="flex items-center gap-3">
               <LogOut size={20} className="text-[#FF4B4B]" />
               <span className="text-[15px] font-medium text-[#FF4B4B]">로그아웃</span>

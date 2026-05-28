@@ -11,9 +11,13 @@ import {
   Loader2,
   ChevronLeft,
   GripVertical,
-  Edit3
+  Edit3,
+  MessageCircle,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
-import { motion, Reorder, useDragControls } from 'framer-motion';
+import { useRouter } from "next/navigation";
+import { AnimatePresence, motion, Reorder, useDragControls } from 'framer-motion';
 import { useRecommendationStore, RecommendedPlace } from "@/store/useRecommendationStore";
 import { useChatStore } from "@/store/useChatStore";
 import { normalizeTags } from "@/utils/tagGrouper";
@@ -24,6 +28,73 @@ const MapClient = dynamic(() => import('@/components/map/MapClient'), {
   loading: () => <div className="h-[280px] w-full bg-gray-100 animate-pulse rounded-3xl flex items-center justify-center text-gray-400">지도 로딩 중...</div>
 });
 
+function asRecord(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object" ? value as Record<string, unknown> : {};
+}
+
+function getCourseIdFromResponse(data: unknown): string | number | null {
+  const root = asRecord(data);
+  const nestedData = asRecord(root.data);
+  const course = asRecord(nestedData.course || root.course);
+
+  const courseId =
+    course.course_id ??
+    nestedData.course_id ??
+    root.course_id ??
+    course.id ??
+    nestedData.id ??
+    root.id;
+
+  return typeof courseId === "string" || typeof courseId === "number" ? courseId : null;
+}
+
+function getApiBaseUrl() {
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+}
+
+function toValidPlaceId(value: unknown): number | null {
+  const numericId = Number(value);
+  return Number.isInteger(numericId) && numericId > 0 ? numericId : null;
+}
+
+function createCoursePlacesPayload(places: Array<{ place_id?: unknown; memo?: string }>) {
+  return places.map((place, index) => {
+    const placeId = toValidPlaceId(place.place_id);
+    if (!placeId) return null;
+
+    return {
+      place_id: placeId,
+      visit_order: index + 1,
+      memo: place.memo || null,
+    };
+  });
+}
+
+async function findSavedCourseIdByTitle(title: string, placeCount: number, token: string | null) {
+  const apiUrl = `${getApiBaseUrl()}/api/courses`;
+  const response = await fetch(apiUrl, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  if (!response.ok) return null;
+
+  const data = await response.json().catch(() => ({}));
+  const root = asRecord(data);
+  const nestedData = asRecord(root.data);
+  const courses = nestedData.courses ?? root.courses ?? nestedData.items ?? root.items ?? [];
+  if (!Array.isArray(courses)) return null;
+
+  const matched = courses.find((course) => {
+    const item = asRecord(course);
+    const itemTitle = String(item.title || item.name || "");
+    const itemPlaceCount = Number(item.place_count ?? item.places_count ?? item.count ?? 0);
+    return itemTitle === title && (!itemPlaceCount || itemPlaceCount === placeCount);
+  });
+
+  if (!matched) return null;
+  const matchedRecord = asRecord(matched);
+  return matchedRecord.course_id ?? matchedRecord.id ?? null;
+}
 
 // CourseItem Component to handle drag controls and memo edit
 function CourseItem({
@@ -37,12 +108,6 @@ function CourseItem({
   const controls = useDragControls();
   const [isEditingMemo, setIsEditingMemo] = useState(false);
   const [memo, setMemo] = useState(place.memo || "");
-
-  // Reset memo state if place.memo changes externally
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    setMemo(place.memo || "");
-  }, [place.memo]);
 
   const handleSaveMemo = (e?: React.FormEvent) => {
     e?.preventDefault();
@@ -127,7 +192,7 @@ function CourseItem({
                   </p>
                 ) : (
                   <p
-                    className="text-[12px] text-gray-300 dark:text-gray-600 font-medium flex-1 cursor-text flex items-center gap-1 opacity-0 group-hover/memo:opacity-100 transition-opacity"
+                    className="text-[12px] text-gray-300 dark:text-gray-600 font-medium flex-1 cursor-text flex items-center gap-1 transition-colors hover:text-brand-red/70"
                     onClick={() => setIsEditingMemo(true)}
                   >
                     <Edit3 size={12} /> 메모 추가
@@ -136,7 +201,7 @@ function CourseItem({
                 {place.memo && (
                   <button
                     onClick={() => setIsEditingMemo(true)}
-                    className="text-gray-300 hover:text-brand-red transition-colors opacity-0 group-hover/memo:opacity-100"
+                    className="text-gray-300/80 dark:text-gray-600 hover:text-brand-red dark:hover:text-brand-red transition-colors"
                   >
                     <Edit3 size={14} />
                   </button>
@@ -159,14 +224,24 @@ function CourseItem({
 }
 
 export default function CourseMap() {
+  const router = useRouter();
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | number | null>(null);
   const [resetTrigger, setResetTrigger] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [toast, setToast] = useState<{ type: "success" | "warning" | "error"; message: string } | null>(null);
 
-  const { recommendedItineraryId, currentCourseName, isBookmarked, setIsBookmarked } = useChatStore();
+  const {
+    recommendedItineraryId,
+    currentCourseName,
+    savedCourseId,
+    isBookmarked,
+    setIsBookmarked,
+    setSavedCourseId,
+  } = useChatStore();
   const recommendations = useRecommendationStore((state) => state.recommendations);
   const setRecommendations = useRecommendationStore((state) => state.setRecommendations);
   const tripTitle = useRecommendationStore((state) => state.tripTitle);
+  const hasCourse = recommendations.length > 0;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [places, setPlaces] = useState<any[]>([]);
@@ -205,6 +280,7 @@ export default function CourseMap() {
 
         return {
           id: p.name + p.lat + idx, // Unique string id for Reorder
+          place_id: p.place_id,
           name: p.name,
           desc: p.desc || p.type || "AI 추천 장소",
           duration: p.duration || "예정",
@@ -215,45 +291,21 @@ export default function CourseMap() {
         };
       }));
     } else {
-      setPlaces([
-        {
-          id: "place-1",
-          name: "성흥산성 사랑나무",
-          desc: "인생샷 명소로 유명한 탁 트인 언덕",
-          duration: "1h 30m",
-          lat: 36.1950,
-          lng: 126.9038,
-          tags: ["사진맛집", "커플", "자연경관"],
-          memo: ""
-        },
-        {
-          id: "place-2",
-          name: "부여 중앙시장",
-          desc: "점심 식사 및 현지 간식 탐방",
-          duration: "1h 00m",
-          lat: 36.2798,
-          lng: 126.9140,
-          tags: ["활기찬", "걷기좋은", "친구와"],
-          memo: ""
-        },
-        {
-          id: "place-3",
-          name: "궁남지 야경",
-          desc: "은은한 조명이 예쁜 산책로 마무~리",
-          duration: "45m",
-          lat: 36.2748,
-          lng: 126.9142,
-          tags: ["야경명소", "낭만적인", "걷기좋은"],
-          memo: "야경 사진 꼭 찍기!"
-        },
-      ]);
+      setPlaces([]);
     }
   }, [recommendations, dbTagsMap]); // Re-sync if store or dbTagsMap changes externally
+
+  useEffect(() => {
+    if (!toast) return;
+    const timeout = setTimeout(() => setToast(null), 2200);
+    return () => clearTimeout(timeout);
+  }, [toast]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const saveToStore = (currentPlaces: any[]) => {
     const newRecs: RecommendedPlace[] = currentPlaces.map((p, idx) => ({
       order: idx + 1,
+      place_id: p.place_id,
       name: p.name,
       lat: p.lat,
       lng: p.lng,
@@ -292,39 +344,108 @@ export default function CourseMap() {
   };
 
   const handleSaveCourse = async () => {
-    if (!recommendedItineraryId) {
-      alert("저장할 코스가 없습니다. TRIPLY를 통해 먼저 코스를 추천받아주세요.");
+    if (!hasCourse || places.length === 0) {
+      setToast({ type: "warning", message: "AI 플레이리스터에서 코스를 먼저 만들어주세요." });
       return;
     }
 
     setIsSaving(true);
+    const token = localStorage.getItem("triply_token");
+    const title = currentCourseName || tripTitle || "AI 추천 코스";
+
     try {
-      const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/courses/from-itinerary/${recommendedItineraryId}`;
-      const token = localStorage.getItem("triply_token");
+      if (isBookmarked) {
+        const courseIdToDelete =
+          savedCourseId ||
+          await findSavedCourseIdByTitle(title, places.length, token);
 
-      const response = await fetch(apiUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {})
-        },
-        body: JSON.stringify({
-          title: currentCourseName || tripTitle || "AI 추천 코스",
-          total_duration: null
-        }),
-      });
+        if (!courseIdToDelete) {
+          setToast({ type: "warning", message: "저장된 코스를 찾지 못했어요." });
+          return;
+        }
 
-      const result = await response.json();
+        const deleteUrl = `${getApiBaseUrl()}/api/courses/${courseIdToDelete}`;
+        const response = await fetch(deleteUrl, {
+          method: "DELETE",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
 
-      if (!response.ok) {
-        throw new Error(result.message || "코스 저장에 실패했습니다.");
+        if (!response.ok) {
+          const result = await response.json().catch(() => ({}));
+          throw new Error(result.message || "코스 저장 취소에 실패했습니다.");
+        }
+
+        setSavedCourseId(null);
+        setIsBookmarked(false);
+        setToast({ type: "success", message: "코스 저장취소!" });
+        return;
       }
 
-      alert("코스가 성공적으로 저장되었습니다!");
+      const headers = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+      };
+      let courseIdAfterSave: string | number | null = recommendedItineraryId;
+      let response: Response | null = null;
+      let result: unknown = {};
+
+      if (recommendedItineraryId) {
+        const apiUrl = `${getApiBaseUrl()}/api/courses/from-itinerary/${recommendedItineraryId}`;
+
+        response = await fetch(apiUrl, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            title,
+            total_duration: null
+          }),
+        });
+
+        result = await response.json().catch(() => ({}));
+      }
+
+      if (!response?.ok) {
+        const coursePlaces = createCoursePlacesPayload(places);
+        const hasMissingPlaceId = coursePlaces.some((place) => place === null);
+
+        if (hasMissingPlaceId) {
+          const resultRecord = asRecord(result);
+          throw new Error(String(resultRecord.message || "저장할 장소 ID를 찾지 못했습니다."));
+        }
+
+        response = await fetch(`${getApiBaseUrl()}/api/courses`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            title,
+            total_duration: null,
+            itinerary: coursePlaces,
+          }),
+        });
+
+        result = await response.json().catch(() => ({}));
+      }
+
+      if (!response.ok) {
+        const resultRecord = asRecord(result);
+        throw new Error(String(resultRecord.message || "코스 저장에 실패했습니다."));
+      }
+
+      courseIdAfterSave =
+        getCourseIdFromResponse(result) ??
+        courseIdAfterSave;
+
+      setToast({ type: "success", message: "코스 저장완료!" });
+      if (courseIdAfterSave) {
+        setSavedCourseId(String(courseIdAfterSave));
+      }
       setIsBookmarked(true);
     } catch (error) {
       console.error("코스 저장 에러:", error);
-      alert("코스 저장에 실패했습니다. 다시 시도해 주세요.");
+      const message = error instanceof Error && error.message
+        ? error.message
+        : isBookmarked ? "저장 취소에 실패했어요." : "코스 저장에 실패했어요.";
+      setToast({ type: "warning", message });
     } finally {
       setIsSaving(false);
     }
@@ -339,7 +460,7 @@ export default function CourseMap() {
         <h1 className="text-lg font-black text-gray-900 dark:text-white tracking-tight">MY PLAYLIST</h1>
         <button
           onClick={handleSaveCourse}
-          disabled={isSaving || isBookmarked}
+          disabled={isSaving}
           className="w-10 h-10 flex items-center justify-center text-gray-900 dark:text-white bg-white dark:bg-gray-900 rounded-full shadow-sm disabled:opacity-50 transition-all hover:scale-105 active:scale-95"
         >
           {isSaving ? (
@@ -357,18 +478,14 @@ export default function CourseMap() {
             animate={{ opacity: 1, scale: 1 }}
             className="rounded-[2.5rem] overflow-hidden shadow-xl shadow-brand-red/10 border border-white dark:border-gray-800"
           >
-            {places.length > 0 ? (
-              <MapClient itinerary={places} selectedPlaceId={selectedPlaceId} resetTrigger={resetTrigger} />
-            ) : (
-              <div className="h-[280px] w-full bg-gray-100 flex items-center justify-center text-gray-400">지도 로딩 중...</div>
-            )}
+            <MapClient itinerary={places} selectedPlaceId={selectedPlaceId} resetTrigger={resetTrigger} />
           </motion.div>
         </div>
 
         <section className="mb-6 relative group">
           <div>
             <h2 className="text-2xl font-black text-gray-900 dark:text-gray-100 mb-1">
-              {recommendations.length > 0 ? (currentCourseName || tripTitle) : "부여 감성 당일치기"}
+              {hasCourse ? (currentCourseName || tripTitle) : "아직 생성된 코스가 없어요"}
             </h2>
             <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
               <div className="flex items-center gap-1 text-brand-red">
@@ -384,55 +501,109 @@ export default function CourseMap() {
         </section>
 
         <section className="space-y-2">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Track List</h3>
-            <div className="flex items-center gap-4">
-              <button
-                onClick={handleShuffle}
-                className="text-gray-400 hover:text-brand-red transition-colors active:scale-95"
-                title="코스 순서 셔플"
+          {hasCourse ? (
+            <>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-widest">Track List</h3>
+                <div className="flex items-center gap-4">
+                  <button
+                    onClick={handleShuffle}
+                    className="text-gray-400 hover:text-brand-red transition-colors active:scale-95"
+                    title="코스 순서 셔플"
+                  >
+                    <Shuffle size={18} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedPlaceId(null);
+                      setResetTrigger(prev => prev + 1);
+                    }}
+                    className="w-8 h-8 bg-brand-red text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-red/30"
+                    title="전체 코스 보기"
+                  >
+                    <Play size={14} fill="currentColor" />
+                  </button>
+                </div>
+              </div>
+
+              <Reorder.Group
+                axis="y"
+                values={places}
+                onReorder={handleReorder}
+                className="space-y-3"
               >
-                <Shuffle size={18} />
-              </button>
+                {places.map((place, index) => (
+                  <CourseItem
+                    key={place.id}
+                    place={place}
+                    index={index}
+                    selectedPlaceId={selectedPlaceId}
+                    setSelectedPlaceId={setSelectedPlaceId}
+                    saveMemoToState={saveMemoToState}
+                  />
+                ))}
+              </Reorder.Group>
+            </>
+          ) : (
+            <div className="rounded-[24px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 px-5 py-8 text-center shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-brand-red/10 text-brand-red">
+                <MessageCircle size={22} />
+              </div>
+              <h3 className="text-[16px] font-black text-gray-900 dark:text-white mb-1">
+                AI 플레이리스터와 함께 코스를 생성해보세요!
+              </h3>
+              <p className="text-[13px] text-gray-500 dark:text-gray-400 leading-relaxed mb-5">
+                원하는 분위기나 지역을 말하면 나만의 여행 코스를 만들어드릴게요.
+              </p>
               <button
-                onClick={() => {
-                  setSelectedPlaceId(null);
-                  setResetTrigger(prev => prev + 1);
-                }}
-                className="w-8 h-8 bg-brand-red text-white rounded-full flex items-center justify-center shadow-lg shadow-brand-red/30"
-                title="전체 코스 보기"
+                onClick={() => router.push("/chat")}
+                className="inline-flex items-center justify-center rounded-full bg-brand-red px-5 py-3 text-[14px] font-bold text-white shadow-lg shadow-brand-red/20 active:scale-95 transition-transform"
               >
-                <Play size={14} fill="currentColor" />
+                AI 플레이리스터 시작하기
               </button>
             </div>
-          </div>
-
-          <Reorder.Group
-            axis="y"
-            values={places}
-            onReorder={handleReorder}
-            className="space-y-3"
-          >
-            {places.map((place, index) => (
-              <CourseItem
-                key={place.id}
-                place={place}
-                index={index}
-                selectedPlaceId={selectedPlaceId}
-                setSelectedPlaceId={setSelectedPlaceId}
-                saveMemoToState={saveMemoToState}
-              />
-            ))}
-          </Reorder.Group>
+          )}
         </section>
       </main>
 
       {/* Floating Action Menu */}
+      {hasCourse && (
       <div className="fixed bottom-24 right-6 flex flex-col gap-3">
         <button className="w-14 h-14 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-full shadow-xl border border-gray-100 dark:border-gray-800 flex items-center justify-center active:scale-95 transition-transform">
           <MapPin size={24} />
         </button>
       </div>
+      )}
+
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 16, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 16, scale: 0.96 }}
+            className="fixed left-1/2 bottom-24 z-50 w-[calc(100%-40px)] max-w-[360px] -translate-x-1/2"
+          >
+            <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-md border ${
+              toast.type === "success"
+                ? "bg-gray-900/95 text-white border-gray-800 dark:bg-white/95 dark:text-gray-900 dark:border-white"
+                : toast.type === "warning"
+                  ? "bg-white/95 text-gray-900 border-brand-red/20 dark:bg-gray-900/95 dark:text-white dark:border-brand-red/30"
+                  : "bg-brand-red text-white border-brand-red"
+            }`}>
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                toast.type === "success"
+                  ? "bg-brand-red text-white"
+                  : toast.type === "warning"
+                    ? "bg-brand-red/10 text-brand-red"
+                    : "bg-white/20 text-white"
+              }`}>
+                {toast.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+              </div>
+              <p className="text-[14px] font-black leading-tight">{toast.message}</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

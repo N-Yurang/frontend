@@ -69,11 +69,12 @@ export default function PlaceDetail() {
 
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const isSaved = useSavedStore((state) => state.isSaved);
-  const savedItems = useSavedStore((state) => state.savedItems);
+  const loadSavedItems = useSavedStore((state) => state.loadSavedItems);
   const clearChat = useChatStore((state) => state.clearChat);
   const sendMessage = useChatStore((state) => state.sendMessage);
 
   useEffect(() => {
+    loadSavedItems();
     Promise.all([
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
       fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
@@ -104,7 +105,7 @@ export default function PlaceDetail() {
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
-  }, [placeId]);
+  }, [placeId, loadSavedItems]);
 
   // Close the tab
   const handleBack = () => {

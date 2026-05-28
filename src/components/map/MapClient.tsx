@@ -104,13 +104,15 @@ export default function MapClient({ itinerary, selectedPlaceId, resetTrigger }: 
       ))}
 
       {/* 2. 폴리라인 (Polyline) */}
-      <Polyline
-        path={itinerary.map((p) => ({ lat: p.lat, lng: p.lng }))}
-        strokeWeight={4}
-        strokeColor="#FF5733"
-        strokeOpacity={0.8}
-        strokeStyle="solid"
-      />
+      {itinerary.length > 1 && (
+        <Polyline
+          path={itinerary.map((p) => ({ lat: p.lat, lng: p.lng }))}
+          strokeWeight={4}
+          strokeColor="#FF5733"
+          strokeOpacity={0.8}
+          strokeStyle="solid"
+        />
+      )}
     </Map>
   );
 }

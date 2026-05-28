@@ -24,6 +24,7 @@ interface ChatState {
   currentItinerary: RecommendedPlace[] | null;
   currentCourseName: string | null;
   recommendedItineraryId: string | null;
+  savedCourseId: string | null;
   totalDistance: number | null;
   isLoading: boolean;
   pastSessions: ChatSession[];
@@ -31,10 +32,12 @@ interface ChatState {
   setCurrentItinerary: (itinerary: RecommendedPlace[] | null) => void;
   setCurrentCourseName: (name: string | null) => void;
   setRecommendedItineraryId: (id: string | null) => void;
+  setSavedCourseId: (id: string | null) => void;
   setTotalDistance: (distance: number | null) => void;
   setIsLoading: (loading: boolean) => void;
   sendMessage: (input: string) => Promise<void>;
   clearChat: () => void;
+  resetForNewUser: () => void;
   loadSession: (sessionId: string) => void;
   deleteSession: (sessionId: string) => void;
   isBookmarked: boolean;
@@ -49,6 +52,48 @@ const initialMessages: Message[] = [
   },
 ];
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_URL;
+
+async function requestRecommendation(input: string, token: string | null, travelDate: string) {
+  const candidates = [
+    API_BASE_URL ? `${API_BASE_URL}/api/v1/recommend` : null,
+    AI_BASE_URL ? `${AI_BASE_URL}/ai/recommend` : null,
+    API_BASE_URL ? `${API_BASE_URL}/api/recommend` : null,
+  ].filter((url): url is string => Boolean(url));
+
+  let lastError: Error | null = null;
+
+  for (const url of candidates) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          chat_history: [
+            { role: "user", content: input }
+          ],
+          travel_date: travelDate
+        }),
+      });
+
+      if (response.status === 404 || response.status === 405) {
+        lastError = new Error(`Endpoint not found: ${url}`);
+        continue;
+      }
+
+      return response;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("AI 요청에 실패했습니다.");
+    }
+  }
+
+  throw lastError || new Error("AI 서버 주소가 설정되지 않았습니다.");
+}
+
 export const useChatStore = create<ChatState>()(
   persist(
     (set, get) => ({
@@ -56,6 +101,7 @@ export const useChatStore = create<ChatState>()(
       currentItinerary: null,
       currentCourseName: null,
       recommendedItineraryId: null,
+      savedCourseId: null,
       totalDistance: null,
       isLoading: false,
       isBookmarked: false,
@@ -67,6 +113,7 @@ export const useChatStore = create<ChatState>()(
       setCurrentItinerary: (itinerary) => set({ currentItinerary: itinerary }),
       setCurrentCourseName: (name) => set({ currentCourseName: name }),
       setRecommendedItineraryId: (id) => set({ recommendedItineraryId: id }),
+      setSavedCourseId: (id) => set({ savedCourseId: id }),
       setTotalDistance: (distance) => set({ totalDistance: distance }),
       setIsLoading: (loading) => set({ isLoading: loading }),
       setIsBookmarked: (bookmarked) => set({ isBookmarked: bookmarked }),
@@ -88,19 +135,7 @@ export const useChatStore = create<ChatState>()(
           const today = new Date();
           const travelDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/recommend`, {
-            method: "POST",
-            headers: { 
-              "Content-Type": "application/json",
-              ...(token ? { Authorization: `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify({
-              chat_history: [
-                { role: "user", content: input }
-              ],
-              travel_date: travelDate
-            }),
-          });
+          const response = await requestRecommendation(input, token, travelDate);
 
           if (response.status === 401 || response.status === 403) {
             throw new Error("로그인이 필요합니다.");
@@ -115,9 +150,10 @@ export const useChatStore = create<ChatState>()(
           
           // 백엔드는 결과를 { data: { ... } } 형태로 감싸서 보내므로 내부 데이터를 추출
           const payload = responseData.data || responseData;
+          const reply = payload.reply || payload.ai_reply;
 
           // 응답 데이터가 아예 없거나 비어있는 경우 처리
-          if (!payload || (!payload.reply && (!payload.itinerary || payload.itinerary.length === 0))) {
+          if (!payload || (!reply && (!payload.itinerary || payload.itinerary.length === 0))) {
             const noDataMsg: Message = {
               id: (Date.now() + 1).toString(),
               role: "ai",
@@ -128,15 +164,15 @@ export const useChatStore = create<ChatState>()(
             return;
           }
 
-          // 새로운 추천 결과가 들어왔으므로 북마크 상태 초기화
-          set({ isBookmarked: false });
+          // 새로운 추천 결과가 들어오면 이전 저장/추천 ID가 섞이지 않도록 초기화
+          set({ isBookmarked: false, savedCourseId: null, recommendedItineraryId: null });
 
-          if (payload.reply || payload.itinerary) {
-            if (payload.reply) {
+          if (reply || payload.itinerary) {
+            if (reply) {
               const aiMsg: Message = {
                 id: (Date.now() + 1).toString(),
                 role: "ai",
-                content: payload.reply,
+                content: reply,
               };
               get().setMessages((prev) => [...prev, aiMsg]);
             }
@@ -146,8 +182,8 @@ export const useChatStore = create<ChatState>()(
             }
 
             let extractedName = payload.course_name;
-            if (!extractedName && payload.reply) {
-              const match = payload.reply.match(/맞게 '([^']+)' 기획을/);
+            if (!extractedName && reply) {
+              const match = reply.match(/맞게 '([^']+)' 기획을/);
               if (match && match[1]) {
                 extractedName = match[1];
               }
@@ -157,8 +193,15 @@ export const useChatStore = create<ChatState>()(
               set({ currentCourseName: extractedName });
             }
 
-            if (payload.recommended_itinerary_id) {
-              set({ recommendedItineraryId: payload.recommended_itinerary_id.toString() });
+            const itineraryId =
+              payload.recommended_itinerary_id ??
+              payload.recommendedItineraryId ??
+              payload.itinerary_id ??
+              payload.itineraryId ??
+              payload.id;
+
+            if (itineraryId) {
+              set({ recommendedItineraryId: itineraryId.toString() });
             }
 
             if (payload.total_distance !== undefined) {
@@ -201,6 +244,7 @@ export const useChatStore = create<ChatState>()(
             currentItinerary: null,
             currentCourseName: null,
             recommendedItineraryId: null,
+            savedCourseId: null,
             totalDistance: null,
             isLoading: false,
             isBookmarked: false
@@ -211,11 +255,25 @@ export const useChatStore = create<ChatState>()(
             currentItinerary: null, 
             currentCourseName: null, 
             recommendedItineraryId: null, 
+            savedCourseId: null,
             totalDistance: null,
             isLoading: false,
             isBookmarked: false
           });
         }
+      },
+      resetForNewUser: () => {
+        set({
+          messages: initialMessages,
+          currentItinerary: null,
+          currentCourseName: null,
+          recommendedItineraryId: null,
+          savedCourseId: null,
+          totalDistance: null,
+          isLoading: false,
+          isBookmarked: false,
+          pastSessions: [],
+        });
       },
       loadSession: (sessionId: string) => {
         const session = get().pastSessions.find(s => s.id === sessionId);
@@ -225,6 +283,7 @@ export const useChatStore = create<ChatState>()(
             currentItinerary: session.itinerary,
             currentCourseName: session.courseName || null,
             recommendedItineraryId: session.recommendedItineraryId || null,
+            savedCourseId: null,
             totalDistance: session.totalDistance || null,
             isLoading: false
           });

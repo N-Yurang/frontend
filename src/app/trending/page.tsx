@@ -27,7 +27,7 @@ export default function TrendingPage() {
 
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const isSaved = useSavedStore((state) => state.isSaved);
-  const savedItems = useSavedStore((state) => state.savedItems);
+  const loadSavedItems = useSavedStore((state) => state.loadSavedItems);
   const clearChat = useChatStore((state) => state.clearChat);
   const sendMessage = useChatStore((state) => state.sendMessage);
 
@@ -35,6 +35,7 @@ export default function TrendingPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    loadSavedItems();
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`)
       .then(res => res.json())
       .then(data => {
@@ -44,7 +45,7 @@ export default function TrendingPage() {
       })
       .catch(console.error)
       .finally(() => setIsLoading(false));
-  }, []);
+  }, [loadSavedItems]);
 
   const filteredPlaces = trendPlaces.filter((place) => {
     if (!place.media_source) return false;
