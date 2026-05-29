@@ -68,7 +68,8 @@ export default function PlaceDetail() {
   const [isLoading, setIsLoading] = useState(true);
 
   const toggleItem = useSavedStore((state) => state.toggleItem);
-  const isSaved = useSavedStore((state) => state.isSaved);
+  const savedItems = useSavedStore((state) => state.savedItems);
+  const isSaved = (id: string) => savedItems.some((item) => item.id === id);
   const loadSavedItems = useSavedStore((state) => state.loadSavedItems);
   const clearChat = useChatStore((state) => state.clearChat);
   const sendMessage = useChatStore((state) => state.sendMessage);
@@ -76,16 +77,24 @@ export default function PlaceDetail() {
   useEffect(() => {
     loadSavedItems();
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/hidden`).then(res => res.json())
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/filter`).then(res => res.json()),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json())
     ])
-      .then(([trendsData, hiddenData]) => {
+      .then(([filterData, trendsData]) => {
         let allPlaces: PlaceData[] = [];
-        if (trendsData?.status === "success") {
-          allPlaces = [...allPlaces, ...trendsData.data.places];
+        if (filterData?.status === "success") {
+          allPlaces = [...allPlaces, ...filterData.data.places];
         }
-        if (hiddenData?.status === "success") {
-          allPlaces = [...allPlaces, ...hiddenData.data.places];
+        
+        if (trendsData?.status === "success") {
+          trendsData.data.places.forEach((tp: any) => {
+            const idx = allPlaces.findIndex(p => String(p.place_id) === String(tp.place_id));
+            if (idx !== -1) {
+              allPlaces[idx] = { ...allPlaces[idx], ...tp };
+            } else {
+              allPlaces.push(tp);
+            }
+          });
         }
 
         const foundPlace = allPlaces.find(p => String(p.place_id) === String(placeId));
@@ -135,11 +144,10 @@ export default function PlaceDetail() {
     <div className="relative min-h-screen bg-white pb-24 overflow-x-hidden flex flex-col w-full">
       {/* 1. Top Image & Top Buttons */}
       <div className="relative w-full h-[316px] bg-[#D9D9D9] flex-shrink-0">
-        <Image
+        <img
           src={place.image_url}
           alt={place.name}
-          fill
-          className="object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
         />
 
         {/* Top bar layer */}
@@ -156,18 +164,14 @@ export default function PlaceDetail() {
               <ShareIcon />
             </button>
             <button
-              onPointerDown={() => toggleItem({
+              onClick={() => toggleItem({
                 id: `place-${place.place_id}`,
                 type: 'place',
                 name: place.name,
                 location: place.location,
                 image_url: place.image_url
               })}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              className="w-[40px] h-[40px] bg-[#2C2C2C]/60 shadow-md rounded-full flex justify-center items-center backdrop-blur-sm"
+              className="w-[40px] h-[40px] bg-[#2C2C2C]/60 shadow-md rounded-full flex justify-center items-center backdrop-blur-sm transition-transform active:scale-95"
             >
               <Heart className={`w-[24px] h-[24px] ${isSaved(`place-${place.place_id}`) ? "text-[#FA5252] fill-[#FA5252]" : "text-white"}`} />
             </button>

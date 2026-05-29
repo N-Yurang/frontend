@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, MapPin, Calendar, Flame, Compass, Play, MoreHorizontal, Info, Heart, Bell, ChevronDown } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import NotificationSheet from "@/components/ui/NotificationSheet";
 import { useSavedStore } from "@/store/useSavedStore";
@@ -80,6 +81,7 @@ interface ApiListResponse<T> {
 }
 
 export default function Home() {
+  const router = useRouter();
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -142,8 +144,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFestivalLoading, setIsFestivalLoading] = useState(true);
 
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+
   const toggleItem = useSavedStore((state) => state.toggleItem);
-  const isSaved = useSavedStore((state) => state.isSaved);
+  const savedItems = useSavedStore((state) => state.savedItems);
+  const isSaved = (id: string) => savedItems.some((item) => item.id === id);
   const loadSavedItems = useSavedStore((state) => state.loadSavedItems);
 
   const getFestivalDescription = (month: number) => {
@@ -221,6 +227,37 @@ export default function Home() {
   useEffect(() => {
     loadSavedItems();
   }, [loadSavedItems]);
+
+  // Debounced search for suggestions
+  useEffect(() => {
+    if (!searchValue.trim()) {
+      setSuggestions([]);
+      setIsSuggesting(false);
+      return;
+    }
+
+    // 입력이 시작되면 바로 로딩(Suggesting) 상태로 전환하여 '결과 없음'이 깜빡이는 것을 방지
+    setIsSuggesting(true);
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchJson<any>(`/api/search/suggest?q=${encodeURIComponent(searchValue.trim())}&limit=5`)
+        .then((data) => {
+          if (data?.data?.items && Array.isArray(data.data.items)) {
+            setSuggestions(data.data.items);
+          } else if (data?.items && Array.isArray(data.items)) {
+            setSuggestions(data.items);
+          } else if (Array.isArray(data)) {
+            setSuggestions(data);
+          } else {
+            setSuggestions([]);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsSuggesting(false));
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchValue]);
 
   // Fetch trends and hidden places once on mount
   useEffect(() => {
@@ -300,37 +337,104 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="relative flex items-center h-[52px] bg-white dark:bg-gray-950 border border-brand-red/30 rounded-2xl shadow-sm transition-all group">
-          <div className="absolute left-4 flex items-center pointer-events-none z-10">
-            <Search className="h-5 w-5 text-brand-red transition-colors" />
+        <div className="relative">
+          <div className="relative flex items-center h-[52px] bg-white dark:bg-gray-950 border border-brand-red/30 rounded-2xl shadow-sm transition-all group z-10">
+            <div className="absolute left-4 flex items-center pointer-events-none z-10">
+              <Search className="h-5 w-5 text-brand-red transition-colors" />
+            </div>
+
+            <input
+              type="text"
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && searchValue.trim()) {
+                  router.push(`/search?q=${encodeURIComponent(searchValue.trim())}`);
+                }
+              }}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              className="w-full h-full pl-11 pr-12 bg-transparent border-transparent text-[15px] font-medium outline-none z-10 relative dark:text-white"
+            />
+
+            {!isFocused && !searchValue && (
+              <div className="absolute inset-y-0 left-11 right-12 flex items-center pointer-events-none overflow-hidden">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={placeholderIndex}
+                    initial={{ y: 20, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: -20, opacity: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="text-[14px] text-gray-400 font-medium absolute w-full truncate"
+                  >
+                    {SEARCH_PLACEHOLDERS[placeholderIndex]}
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            )}
           </div>
 
-          <input
-            type="text"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            className="w-full h-full pl-11 pr-12 bg-transparent border-transparent text-[15px] font-medium outline-none z-10 relative dark:text-white"
-          />
+          {/* Autocomplete Dropdown */}
+          <AnimatePresence>
+            {isFocused && searchValue.trim() && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                transition={{ duration: 0.2 }}
+                className="absolute left-0 right-0 top-[60px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl z-50 overflow-hidden py-2"
+              >
+                {suggestions.length > 0 ? (
+                  suggestions.map((item, idx) => {
+                    const isPlace = item.type === "place";
+                    const itemId = item.id || item.place_id || item.festival_id || idx;
+                    const href = isPlace ? `/place/${itemId}` : null;
 
+                    const content = (
+                      <div
+                        onMouseDown={(e) => e.preventDefault()} // prevent input blur
+                        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                      >
+                        <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[14px] font-bold text-gray-900 dark:text-gray-100 truncate">
+                            {item.name || item.title}
+                          </div>
+                          {(item.location || item.date) && (
+                            <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                              <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${isPlace ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-brand-red/10 text-brand-red'}`}>
+                                {isPlace ? '장소' : '축제'}
+                              </span>
+                              <span className="truncate">{item.location || item.date}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
 
-          {!isFocused && !searchValue && (
-            <div className="absolute inset-y-0 left-11 right-12 flex items-center pointer-events-none overflow-hidden">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={placeholderIndex}
-                  initial={{ y: 20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ y: -20, opacity: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="text-[14px] text-gray-400 font-medium absolute w-full truncate"
-                >
-                  {SEARCH_PLACEHOLDERS[placeholderIndex]}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          )}
+                    return href ? (
+                      <Link key={`${item.type}-${itemId}`} href={href} className="block">
+                        {content}
+                      </Link>
+                    ) : (
+                      <div key={`${item.type}-${itemId}`} className="opacity-80">
+                        {content}
+                      </div>
+                    );
+                  })
+                ) : isSuggesting ? (
+                  <div className="px-4 py-8 flex justify-center">
+                    <div className="w-5 h-5 border-2 border-brand-red border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : (
+                  <div className="px-4 py-8 text-center text-[13px] text-gray-500 font-medium">
+                    일치하는 결과가 없습니다.
+                  </div>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </header>
 
@@ -476,51 +580,51 @@ export default function Home() {
                   >
                     <Link href={`/place/${item.place_id}`} className="block w-full h-full">
                       <div className="relative h-44 w-full rounded-3xl overflow-hidden mb-3 shadow-md bg-gray-100 dark:bg-gray-800 transition-all group-hover:shadow-xl">
-                      <img
-                        src={getAssetUrl(item.image_url)}
-                        alt={item.name}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-
-                      {/* Like Button */}
-                      <button
-                        onPointerDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleItem({
-                            id: `place-${item.place_id}`,
-                            type: 'place',
-                            name: item.name,
-                            location: item.location,
-                            image_url: getAssetUrl(item.image_url)
-                          });
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
-                      >
-                        <Heart
-                          size={16}
-                          className={`${isSaved(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                        <img
+                          src={getAssetUrl(item.image_url)}
+                          alt={item.name}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
-                      </button>
 
-                      {/* Small Play Indicator */}
-                      <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Play size={14} className="text-white fill-white ml-0.5" />
+                        {/* Like Button */}
+                        <button
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleItem({
+                              id: `place-${item.place_id}`,
+                              type: 'place',
+                              name: item.name,
+                              location: item.location,
+                              image_url: getAssetUrl(item.image_url)
+                            });
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
+                        >
+                          <Heart
+                            size={16}
+                            className={`${isSaved(`place-${item.place_id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                          />
+                        </button>
+
+                        {/* Small Play Indicator */}
+                        <div className="absolute bottom-3 right-3 w-8 h-8 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Play size={14} className="text-white fill-white ml-0.5" />
+                        </div>
                       </div>
-                    </div>
-                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] px-1 truncate transition-colors">{item.name}</h3>
-                    <div className="flex items-center justify-between px-1 mt-1">
-                      <p className="text-[11px] text-gray-400 flex items-center gap-0.5">
-                        <MapPin className="w-3 h-3 text-brand-red" /> {item.location}
-                      </p>
-                      <button className="text-gray-300 hover:text-gray-900 dark:hover:text-white">
-                        <MoreHorizontal size={14} />
-                      </button>
-                    </div>
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] px-1 truncate transition-colors">{item.name}</h3>
+                      <div className="flex items-center justify-between px-1 mt-1">
+                        <p className="text-[11px] text-gray-400 flex items-center gap-0.5">
+                          <MapPin className="w-3 h-3 text-brand-red" /> {item.location}
+                        </p>
+                        <button className="text-gray-300 hover:text-gray-900 dark:hover:text-white">
+                          <MoreHorizontal size={14} />
+                        </button>
+                      </div>
                     </Link>
                   </motion.div>
                 );
@@ -542,7 +646,7 @@ export default function Home() {
               </p>
             </div>
             <div className="relative" ref={dropdownRef}>
-              <button 
+              <button
                 onClick={() => setIsMonthDropdownOpen(!isMonthDropdownOpen)}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-red/10 text-brand-red rounded-full text-xs font-bold transition-all hover:bg-brand-red/20 active:scale-95 border border-brand-red/20 shadow-sm"
               >
@@ -573,11 +677,10 @@ export default function Home() {
                               setSelectedMonth(m);
                               setIsMonthDropdownOpen(false);
                             }}
-                            className={`h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${
-                              isSelected
+                            className={`h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${isSelected
                                 ? "bg-brand-red text-white shadow-md shadow-brand-red/20"
                                 : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
-                            }`}
+                              }`}
                           >
                             {m}월
                           </button>
@@ -600,7 +703,7 @@ export default function Home() {
                 </div>
               ))
             ) : festivals.length === 0 ? (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="w-full py-8 flex flex-col items-center justify-center text-center px-4"

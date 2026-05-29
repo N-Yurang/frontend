@@ -26,7 +26,8 @@ export default function TrendingPage() {
   const tabs = ["드라마 속 그곳", "예능 촬영지", "영화 속 장소"];
 
   const toggleItem = useSavedStore((state) => state.toggleItem);
-  const isSaved = useSavedStore((state) => state.isSaved);
+  const savedItems = useSavedStore((state) => state.savedItems);
+  const isSaved = (id: string) => savedItems.some((item) => item.id === id);
   const loadSavedItems = useSavedStore((state) => state.loadSavedItems);
   const clearChat = useChatStore((state) => state.clearChat);
   const sendMessage = useChatStore((state) => state.sendMessage);
@@ -153,14 +154,14 @@ export default function TrendingPage() {
               <div className="w-full h-[1px] bg-[#E8E7E2] my-4" />
 
               <button
-                onClick={(e) => { 
-                  e.preventDefault(); 
+                onClick={(e) => {
+                  e.preventDefault();
                   clearChat();
                   const placeName = place.name || place.location;
                   if (placeName) {
                     sendMessage(`${appendEulReul(placeName)} 포함해서 코스를 짜줘`);
                   }
-                  router.push('/chat'); 
+                  router.push('/chat');
                 }}
                 className="w-full h-11 bg-gradient-to-br from-[#FA5252] to-[#FF8E73] rounded-xl flex items-center justify-center gap-2 text-white font-semibold text-[14px] hover:opacity-90 transition-opacity"
               >
