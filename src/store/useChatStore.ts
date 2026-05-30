@@ -55,7 +55,7 @@ const initialMessages: Message[] = [
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_URL;
 
-async function requestRecommendation(input: string, token: string | null, travelDate: string) {
+async function requestRecommendation(messages: Message[], token: string | null, travelDate: string) {
   const candidates = [
     API_BASE_URL ? `${API_BASE_URL}/api/v1/recommend` : null,
     AI_BASE_URL ? `${AI_BASE_URL}/ai/recommend` : null,
@@ -73,9 +73,7 @@ async function requestRecommendation(input: string, token: string | null, travel
           ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({
-          chat_history: [
-            { role: "user", content: input }
-          ],
+          chat_history: messages.map(msg => ({ role: msg.role, content: msg.content })),
           travel_date: travelDate
         }),
       });
@@ -135,7 +133,7 @@ export const useChatStore = create<ChatState>()(
           const today = new Date();
           const travelDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-          const response = await requestRecommendation(input, token, travelDate);
+          const response = await requestRecommendation(get().messages, token, travelDate);
 
           if (response.status === 401 || response.status === 403) {
             throw new Error("로그인이 필요합니다.");
