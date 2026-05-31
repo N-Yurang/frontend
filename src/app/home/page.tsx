@@ -388,8 +388,9 @@ export default function Home() {
                 {suggestions.length > 0 ? (
                   suggestions.map((item, idx) => {
                     const isPlace = item.type === "place";
+                    const isFestival = item.type === "festival";
                     const itemId = item.id || item.place_id || item.festival_id || idx;
-                    const href = isPlace ? `/place/${itemId}` : null;
+                    const href = isPlace ? `/place/${itemId}` : (isFestival ? `/festival/${itemId}` : null);
 
                     const content = (
                       <div
@@ -730,14 +731,14 @@ export default function Home() {
                   : item.date;
 
                 return (
-                  <motion.div
-                    key={item.festival_id || item.id}
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.1 }}
-                    className="min-w-[160px] flex-shrink-0 group cursor-pointer"
-                  >
+                  <Link href={`/festival/${item.festival_id || item.id}`} key={item.festival_id || item.id}>
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="min-w-[160px] flex-shrink-0 group cursor-pointer block"
+                    >
                     <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
                       <img
                         src={imageUrl}
@@ -777,7 +778,8 @@ export default function Home() {
                         {dateStr}
                       </div>
                     )}
-                  </motion.div>
+                    </motion.div>
+                  </Link>
                 );
               })
             )}

@@ -257,8 +257,7 @@ export default function MyPage() {
               const isFestival = place.type === "festival";
               const realId = place.id.replace(/^(place-|festival-)/, '');
               
-              // TODO: 축제 상세 페이지가 생기면 `/festival/${realId}`로 연결하세요.
-              const href = isFestival ? null : `/place/${realId}`;
+              const href = isFestival ? `/festival/${realId}` : `/place/${realId}`;
 
               const content = (
                 <div className="flex flex-col relative group">
@@ -736,8 +735,7 @@ export default function MyPage() {
                 const isFestival = place.type === "festival";
                 const realId = place.id.replace(/^(place-|festival-)/, '');
                 
-                // TODO: 축제 상세 페이지가 생기면 `/festival/${realId}`로 연결하세요.
-                const href = isFestival ? null : `/place/${realId}`;
+                const href = isFestival ? `/festival/${realId}` : `/place/${realId}`;
 
                 const content = (
                   <div className="flex flex-col relative group">

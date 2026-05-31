@@ -198,8 +198,11 @@ function SearchContent() {
                 </div>
               );
 
-              return isPlace ? (
-                <Link key={`search-${item.type}-${itemId}`} href={`/place/${itemId}`} className="block">
+              const isFestival = item.type === "festival";
+              const href = isPlace ? `/place/${itemId}` : (isFestival ? `/festival/${itemId}` : null);
+
+              return href ? (
+                <Link key={`search-${item.type}-${itemId}`} href={href} className="block">
                   {content}
                 </Link>
               ) : (
