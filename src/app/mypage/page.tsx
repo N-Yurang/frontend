@@ -125,7 +125,7 @@ export default function MyPage() {
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const clearSavedItems = useSavedStore((state) => state.clearSavedItems);
   const savedPlaces = isMounted && Array.isArray(savedItems)
-    ? savedItems.filter((i) => i?.type === 'place')
+    ? savedItems
     : [];
 
   const visiblePlaylists = playlists;
@@ -253,36 +253,58 @@ export default function MyPage() {
         </div>
         <div className="flex-1 overflow-y-auto px-5 pt-4 pb-10">
           <div className="grid grid-cols-2 gap-4">
-            {savedPlaces.map(place => (
-              <Link href={`/place/${place.id.replace(/^(place-|festival-)/, '')}`} key={place.id} className="flex flex-col relative group">
-                <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative shadow-sm">
-                  {place.image_url ? (
-                    <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
-                      <span className="text-[11px] text-gray-400">이미지 없음</span>
-                    </div>
+            {savedPlaces.map(place => {
+              const isFestival = place.type === "festival";
+              const realId = place.id.replace(/^(place-|festival-)/, '');
+              
+              // TODO: 축제 상세 페이지가 생기면 `/festival/${realId}`로 연결하세요.
+              const href = isFestival ? null : `/place/${realId}`;
+
+              const content = (
+                <div className="flex flex-col relative group">
+                  <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative shadow-sm">
+                    {place.image_url ? (
+                      <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
+                        <span className="text-[11px] text-gray-400">이미지 없음</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleItem(place);
+                      }}
+                      className="absolute top-2 right-2 w-7 h-7 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-[#FF4B4B]/90 transition-colors z-10 active:scale-95 shadow-md"
+                    >
+                      <X size={14} className="text-white" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className={`shrink-0 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${!isFestival ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-brand-red/10 text-brand-red'}`}>
+                      {!isFestival ? '장소' : '축제'}
+                    </span>
+                    <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{place.name}</h4>
+                  </div>
+                  {(place.location || place.dateStr) && (
+                    <p className="text-[11px] text-gray-400 truncate flex items-center gap-0.5 mt-0.5">
+                      <MapPin size={10} className="text-[#FF4B4B]" /> {place.location || place.dateStr}
+                    </p>
                   )}
-                  {/* Immediate Delete Button */}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      toggleItem(place);
-                    }}
-                    className="absolute top-2 right-2 w-7 h-7 bg-black/40 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-[#FF4B4B]/90 transition-colors z-10 active:scale-95 shadow-md"
-                  >
-                    <X size={14} className="text-white" />
-                  </button>
                 </div>
-                <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{place.name}</h4>
-                {place.location && (
-                  <p className="text-[11px] text-gray-400 truncate flex items-center gap-0.5 mt-0.5">
-                    <MapPin size={10} className="text-[#FF4B4B]" /> {place.location}
-                  </p>
-                )}
-              </Link>
-            ))}
+              );
+
+              return href ? (
+                <Link href={href} key={place.id} className="block">
+                  {content}
+                </Link>
+              ) : (
+                <div key={place.id} className="block opacity-90">
+                  {content}
+                </div>
+              );
+            })}
           </div>
           {savedPlaces.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -710,25 +732,48 @@ export default function MyPage() {
 
           {savedPlaces.length > 0 ? (
             <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-2">
-              {savedPlaces.map(place => (
-                <Link href={`/place/${place.id.replace(/^(place-|festival-)/, '')}`} key={place.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
-                  <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative">
-                    {place.image_url ? (
-                      <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
-                        <span className="text-[11px] text-gray-400">이미지 없음</span>
-                      </div>
+              {savedPlaces.map(place => {
+                const isFestival = place.type === "festival";
+                const realId = place.id.replace(/^(place-|festival-)/, '');
+                
+                // TODO: 축제 상세 페이지가 생기면 `/festival/${realId}`로 연결하세요.
+                const href = isFestival ? null : `/place/${realId}`;
+
+                const content = (
+                  <div className="flex flex-col relative group">
+                    <div className="w-full aspect-square rounded-2xl overflow-hidden mb-2 bg-gray-100 border border-gray-100 dark:border-gray-800 relative">
+                      {place.image_url ? (
+                        <img src={getAssetUrl(place.image_url)} className="absolute inset-0 w-full h-full object-cover" alt={place.name} />
+                      ) : (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-200 dark:bg-gray-800">
+                          <span className="text-[11px] text-gray-400">이미지 없음</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 mb-0.5">
+                      <span className={`shrink-0 inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${!isFestival ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-brand-red/10 text-brand-red'}`}>
+                        {!isFestival ? '장소' : '축제'}
+                      </span>
+                      <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{place.name}</h4>
+                    </div>
+                    {(place.location || place.dateStr) && (
+                      <p className="text-[11px] text-gray-400 truncate flex items-center gap-0.5 mt-0.5">
+                        <MapPin size={10} className="text-[#FF4B4B]" /> {place.location || place.dateStr}
+                      </p>
                     )}
                   </div>
-                  <h4 className="font-bold text-[13px] text-gray-900 dark:text-white truncate">{place.name}</h4>
-                  {place.location && (
-                    <p className="text-[11px] text-gray-400 truncate flex items-center gap-0.5 mt-0.5">
-                      <MapPin size={10} className="text-[#FF4B4B]" /> {place.location}
-                    </p>
-                  )}
-                </Link>
-              ))}
+                );
+
+                return href ? (
+                  <Link href={href} key={place.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0">
+                    {content}
+                  </Link>
+                ) : (
+                  <div key={place.id} className="min-w-[140px] w-[140px] flex flex-col shrink-0 opacity-90 cursor-default">
+                    {content}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="text-center py-6">

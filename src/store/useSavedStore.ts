@@ -43,8 +43,35 @@ function asRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' ? value as Record<string, unknown> : {};
 }
 
-function normalizeSavedPlace(raw: unknown): SavedItem | null {
+function normalizeSavedItem(raw: unknown): SavedItem | null {
   const rawRecord = asRecord(raw);
+  
+  // 만약 백엔드에서 type과 id가 포함된 items 배열의 요소라면 그대로 사용
+  if (rawRecord.type === 'festival' || rawRecord.type === 'place') {
+    const formatDate = (dateStr: unknown) => {
+      if (!dateStr || typeof dateStr !== 'string') return "";
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? dateStr : `${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+    };
+
+    let dateStr = undefined;
+    if (rawRecord.type === 'festival') {
+      dateStr = rawRecord.start_date
+        ? (rawRecord.end_date ? `${formatDate(rawRecord.start_date)}~${formatDate(rawRecord.end_date)}` : formatDate(rawRecord.start_date))
+        : String(rawRecord.date || '');
+    }
+
+    return {
+      id: String(rawRecord.id),
+      type: rawRecord.type as 'place' | 'festival',
+      name: String(rawRecord.name || rawRecord.title || ''),
+      location: String(rawRecord.location || rawRecord.address || ''),
+      image_url: String(rawRecord.image_url || rawRecord.image || ''),
+      dateStr: dateStr,
+    };
+  }
+
+  // 레거시 응답 호환 (단일 place 객체)
   const place = asRecord(rawRecord.place || raw);
   const placeId = place.place_id ?? place.id ?? rawRecord.place_id;
   if (!placeId) return null;
@@ -62,6 +89,7 @@ function extractSavedPlaces(data: unknown) {
   const root = asRecord(data);
   const nestedData = asRecord(root.data);
   const list =
+    nestedData.items ?? // 새로운 통합 API의 items 배열 우선
     nestedData.places ??
     nestedData.saved_places ??
     nestedData.favorites ??
@@ -72,7 +100,7 @@ function extractSavedPlaces(data: unknown) {
     [];
 
   return Array.isArray(list)
-    ? list.map(normalizeSavedPlace).filter((item): item is SavedItem => Boolean(item))
+    ? list.map(normalizeSavedItem).filter((item): item is SavedItem => Boolean(item))
     : [];
 }
 
@@ -122,26 +150,38 @@ export const useSavedStore = create<SavedState>()((set, get) => ({
     }
   },
   toggleItem: async (item) => {
-    if (item.type !== 'place') return;
-
     const wasSaved = get().isSaved(item.id);
-    const placeId = getPlaceId(item.id);
-    const legacyEndpoints = savedPlaceListEndpoints.filter((endpoint) => endpoint !== '/api/likes');
-    const endpoints = wasSaved
-      ? ['/api/likes', ...legacyEndpoints]
-      : ['/api/likes', ...legacyEndpoints];
+
+    let endpoints: string[];
+    let getEndpointPath: (endpoint: string) => string;
+    let getBody: (endpoint: string) => BodyInit | null | undefined;
+
+    if (item.type === 'festival') {
+      const festivalId = item.id.replace(/^festival-/, '');
+      endpoints = ['/api/likes/festivals'];
+      getEndpointPath = (endpoint) => `${endpoint}/${festivalId}`;
+      getBody = () => undefined; // POST/DELETE /api/likes/festivals/:id 는 body가 필요없음
+    } else {
+      const placeId = getPlaceId(item.id);
+      const legacyEndpoints = savedPlaceListEndpoints.filter((endpoint) => endpoint !== '/api/likes');
+      endpoints = wasSaved
+        ? ['/api/likes', ...legacyEndpoints]
+        : ['/api/likes', ...legacyEndpoints];
+      getEndpointPath = (endpoint) => {
+        if (endpoint === '/api/likes') return `${endpoint}/${placeId}`;
+        return wasSaved ? `${endpoint}/${placeId}` : endpoint;
+      };
+      getBody = (endpoint) => (wasSaved || endpoint === '/api/likes' ? undefined : JSON.stringify({ place_id: placeId }));
+    }
 
     try {
       const response = await fetchWithEndpointCandidates(
         endpoints,
-        (endpoint) => {
-          if (endpoint === '/api/likes') return `${endpoint}/${placeId}`;
-          return wasSaved ? `${endpoint}/${placeId}` : endpoint;
-        },
+        getEndpointPath,
         (endpoint) => ({
           method: wasSaved ? 'DELETE' : 'POST',
           headers: getAuthHeaders(),
-          body: wasSaved || endpoint === '/api/likes' ? undefined : JSON.stringify({ place_id: placeId }),
+          body: getBody(endpoint),
         })
       );
 

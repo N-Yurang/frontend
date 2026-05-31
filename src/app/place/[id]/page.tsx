@@ -76,17 +76,26 @@ export default function PlaceDetail() {
 
   useEffect(() => {
     loadSavedItems();
+    
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001';
+    
     Promise.all([
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/filter`).then(res => res.json()),
-      fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/places/trends`).then(res => res.json())
+      fetch(`${API_BASE_URL}/api/places/filter`).then(res => {
+        if (!res.ok) throw new Error(`Filter API failed: ${res.status}`);
+        return res.json();
+      }),
+      fetch(`${API_BASE_URL}/api/places/trends`).then(res => {
+        if (!res.ok) throw new Error(`Trends API failed: ${res.status}`);
+        return res.json();
+      })
     ])
       .then(([filterData, trendsData]) => {
         let allPlaces: PlaceData[] = [];
-        if (filterData?.status === "success") {
-          allPlaces = [...allPlaces, ...filterData.data.places];
+        if (filterData?.status === "success" && filterData.data?.places) {
+          allPlaces = [...filterData.data.places];
         }
         
-        if (trendsData?.status === "success") {
+        if (trendsData?.status === "success" && trendsData.data?.places) {
           trendsData.data.places.forEach((tp: any) => {
             const idx = allPlaces.findIndex(p => String(p.place_id) === String(tp.place_id));
             if (idx !== -1) {
@@ -101,18 +110,21 @@ export default function PlaceDetail() {
         if (foundPlace) {
           setPlace({
             ...foundPlace,
-            // DB에 없는 부가 정보 모의 데이터 사용 (추후 DB 업데이트 시 대체 가능)
             type: foundPlace.category === 'TREND' ? '핫플' : (foundPlace.category === 'HIDDEN' ? '숨은명소' : '명소'),
             rating: 4.8,
             reviews_count: 328,
             description: foundPlace.description || "해당 장소에 대한 소개가 없습니다.",
             hours: "매일 09:00 - 21:00",
             media_source: foundPlace.media_source || "미디어 명소",
-            image_url: foundPlace.image_url?.startsWith('http') ? foundPlace.image_url : `${process.env.NEXT_PUBLIC_API_URL}${foundPlace.image_url}`
+            image_url: foundPlace.image_url?.startsWith('http') ? foundPlace.image_url : `${API_BASE_URL}${foundPlace.image_url || ''}`
           });
+        } else {
+          console.warn(`Place ${placeId} not found in filter or trends data`);
         }
       })
-      .catch(console.error)
+      .catch(err => {
+        console.error("Failed to load place data:", err);
+      })
       .finally(() => setIsLoading(false));
   }, [placeId, loadSavedItems]);
 
