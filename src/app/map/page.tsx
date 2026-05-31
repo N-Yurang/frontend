@@ -568,11 +568,11 @@ export default function CourseMap() {
 
       {/* Floating Action Menu */}
       {hasCourse && (
-      <div className="fixed bottom-24 right-6 flex flex-col gap-3">
-        <button className="w-14 h-14 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-full shadow-xl border border-gray-100 dark:border-gray-800 flex items-center justify-center active:scale-95 transition-transform">
-          <MapPin size={24} />
-        </button>
-      </div>
+        <div className="fixed bottom-24 right-6 flex flex-col gap-3">
+          <button className="w-14 h-14 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-full shadow-xl border border-gray-100 dark:border-gray-800 flex items-center justify-center active:scale-95 transition-transform">
+            <MapPin size={24} />
+          </button>
+        </div>
       )}
 
       <AnimatePresence>
@@ -583,20 +583,18 @@ export default function CourseMap() {
             exit={{ opacity: 0, y: 16, scale: 0.96 }}
             className="fixed left-1/2 bottom-24 z-50 w-[calc(100%-40px)] max-w-[360px] -translate-x-1/2"
           >
-            <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-md border ${
-              toast.type === "success"
+            <div className={`flex items-center gap-3 rounded-2xl px-4 py-3 shadow-xl backdrop-blur-md border ${toast.type === "success"
                 ? "bg-gray-900/95 text-white border-gray-800 dark:bg-white/95 dark:text-gray-900 dark:border-white"
                 : toast.type === "warning"
                   ? "bg-white/95 text-gray-900 border-brand-red/20 dark:bg-gray-900/95 dark:text-white dark:border-brand-red/30"
                   : "bg-brand-red text-white border-brand-red"
-            }`}>
-              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                toast.type === "success"
+              }`}>
+              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${toast.type === "success"
                   ? "bg-brand-red text-white"
                   : toast.type === "warning"
                     ? "bg-brand-red/10 text-brand-red"
                     : "bg-white/20 text-white"
-              }`}>
+                }`}>
                 {toast.type === "success" ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
               </div>
               <p className="text-[14px] font-black leading-tight">{toast.message}</p>

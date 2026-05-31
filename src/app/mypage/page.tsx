@@ -6,6 +6,7 @@ import { useTheme } from "next-themes";
 import { useSavedStore } from "@/store/useSavedStore";
 import { useChatStore } from "@/store/useChatStore";
 import { useRecommendationStore, RecommendedPlace } from "@/store/useRecommendationStore";
+import { usePlaylistStore } from "@/store/usePlaylistStore";
 import { useRouter } from "next/navigation";
 import { normalizeTags } from "@/utils/tagGrouper";
 import Link from "next/link";
@@ -115,8 +116,8 @@ export default function MyPage() {
   const [userId, setUserId] = useState("loading...");
   const [tags, setTags] = useState<string[]>([]);
   const [isEditingTags, setIsEditingTags] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [playlists, setPlaylists] = useState<any[]>([]);
+
+  const { playlists, setPlaylists } = usePlaylistStore();
 
   const { theme, setTheme } = useTheme();
 
