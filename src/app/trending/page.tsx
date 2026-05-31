@@ -58,20 +58,17 @@ export default function TrendingPage() {
   return (
     <div className="flex flex-col min-h-screen bg-[#F5F4F0] pb-24">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white border-b border-[#E8E7E2] px-5 py-4 flex items-center justify-between">
-        <button onClick={() => router.back()} className="text-[#2C2C2A] hover:text-brand-red transition-colors">
+      <header className="relative sticky top-0 z-50 bg-white h-14 px-5 flex items-center justify-center">
+        <button onClick={() => router.back()} className="absolute left-5 text-[#2C2C2A] hover:text-brand-red transition-colors">
           <ChevronLeft size={24} />
         </button>
         <h1 className="text-[17px] font-semibold text-[#2C2C2A]">
           트렌드 여행지
         </h1>
-        <button className="text-[#2C2C2A] hover:text-brand-red transition-colors">
-          <Search size={22} />
-        </button>
       </header>
 
       {/* Tabs */}
-      <div className="sticky top-[60px] z-40 bg-white border-b border-[#E8E7E2] flex items-center">
+      <div className="sticky top-14 z-40 bg-white border-b border-[#E8E7E2] flex items-center">
         <div className="flex w-full">
           {tabs.map((tab) => (
             <button

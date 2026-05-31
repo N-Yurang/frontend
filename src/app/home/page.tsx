@@ -679,8 +679,8 @@ export default function Home() {
                               setIsMonthDropdownOpen(false);
                             }}
                             className={`h-9 rounded-xl text-xs font-bold flex items-center justify-center transition-all ${isSelected
-                                ? "bg-brand-red text-white shadow-md shadow-brand-red/20"
-                                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                              ? "bg-brand-red text-white shadow-md shadow-brand-red/20"
+                              : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
                               }`}
                           >
                             {m}월
@@ -739,45 +739,45 @@ export default function Home() {
                       transition={{ delay: idx * 0.1 }}
                       className="min-w-[160px] flex-shrink-0 group cursor-pointer block"
                     >
-                    <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
-                      <img
-                        src={imageUrl}
-                        alt={title}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
-                      />
-
-                      {/* Like Button */}
-                      <button
-                        onPointerDown={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          toggleItem({
-                            id: `festival-${item.festival_id || item.id}`,
-                            type: 'festival',
-                            name: title || "",
-                            dateStr: dateStr,
-                            image_url: imageUrl || ""
-                          });
-                        }}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                        }}
-                        className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
-                      >
-                        <Heart
-                          size={16}
-                          className={`${isSaved(`festival-${item.festival_id || item.id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                      <div className="relative h-40 w-full rounded-3xl overflow-hidden mb-3 shadow-lg bg-gray-100 dark:bg-gray-800 transition-all border border-gray-100 dark:border-gray-800 group-hover:border-brand-red/30">
+                        <img
+                          src={imageUrl}
+                          alt={title}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
-                      </button>
 
-                    </div>
-                    <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] mb-1.5 transition-colors line-clamp-1">{title}</h3>
-                    {dateStr && (
-                      <div className="inline-flex w-fit items-center rounded-full bg-brand-red/10 px-2.5 py-1 text-[12px] font-black text-brand-red ring-1 ring-brand-red/15">
-                        {dateStr}
+                        {/* Like Button */}
+                        <button
+                          onPointerDown={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            toggleItem({
+                              id: `festival-${item.festival_id || item.id}`,
+                              type: 'festival',
+                              name: title || "",
+                              dateStr: dateStr,
+                              image_url: imageUrl || ""
+                            });
+                          }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                          }}
+                          className="absolute top-3 right-3 z-20 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center transition-all hover:bg-black/40 active:scale-95"
+                        >
+                          <Heart
+                            size={16}
+                            className={`${isSaved(`festival-${item.festival_id || item.id}`) ? "text-brand-red fill-brand-red" : "text-white"}`}
+                          />
+                        </button>
+
                       </div>
-                    )}
+                      <h3 className="font-bold text-gray-900 dark:text-gray-100 text-[14px] mb-1.5 transition-colors line-clamp-1">{title}</h3>
+                      {dateStr && (
+                        <div className="inline-flex w-fit items-center rounded-full bg-brand-red/10 px-2.5 py-1 text-[12px] font-black text-brand-red ring-1 ring-brand-red/15">
+                          {dateStr}
+                        </div>
+                      )}
                     </motion.div>
                   </Link>
                 );

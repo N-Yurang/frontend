@@ -256,7 +256,7 @@ export default function MyPage() {
             {savedPlaces.map(place => {
               const isFestival = place.type === "festival";
               const realId = place.id.replace(/^(place-|festival-)/, '');
-              
+
               const href = isFestival ? `/festival/${realId}` : `/place/${realId}`;
 
               const content = (
@@ -356,9 +356,9 @@ export default function MyPage() {
             </div>
           )}
         </div>
-        
+
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-40 w-full max-w-[440px] px-5">
-          <button 
+          <button
             onClick={() => {
               if (!selectedPlaylist.places || selectedPlaylist.places.length === 0) return;
               const recommendations = mapPlaylistPlacesToRecommendations(selectedPlaylist.places);
@@ -398,8 +398,8 @@ export default function MyPage() {
         <div className="flex-1 overflow-y-auto px-5 pt-4 pb-10">
           <div className="grid grid-cols-2 gap-4">
             {visiblePlaylists.map(pl => (
-              <div 
-                key={pl.course_id} 
+              <div
+                key={pl.course_id}
                 onClick={() => {
                   setSelectedPlaylist(pl);
                   setView('playlistDetail');
@@ -408,7 +408,7 @@ export default function MyPage() {
               >
                 <div className="w-full h-[120px] bg-gray-100 dark:bg-gray-800 relative">
                   <CourseCollage images={pl.images || (pl.thumbnail_url ? [pl.thumbnail_url] : [])} />
-                  <button 
+                  <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeletingPlaylistId(pl.course_id);
@@ -686,8 +686,8 @@ export default function MyPage() {
 
           <div className="flex gap-4 overflow-x-auto scrollbar-hide -mx-2 px-2 pb-4">
             {visiblePlaylists.length > 0 ? visiblePlaylists.map(pl => (
-              <div 
-                key={pl.course_id} 
+              <div
+                key={pl.course_id}
                 onClick={() => {
                   setSelectedPlaylist(pl);
                   setView('playlistDetail');
@@ -734,7 +734,7 @@ export default function MyPage() {
               {savedPlaces.map(place => {
                 const isFestival = place.type === "festival";
                 const realId = place.id.replace(/^(place-|festival-)/, '');
-                
+
                 const href = isFestival ? `/festival/${realId}` : `/place/${realId}`;
 
                 const content = (

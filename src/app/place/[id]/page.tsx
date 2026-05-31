@@ -108,11 +108,29 @@ export default function PlaceDetail() {
 
         const foundPlace = allPlaces.find(p => String(p.place_id) === String(placeId));
         if (foundPlace) {
+          const calculatePseudoRandomRating = (idStr: string) => {
+            let hash = 0;
+            for (let i = 0; i < idStr.length; i++) {
+              hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            hash = Math.abs(hash);
+            const randomValue = (hash % 21) / 10; // 0.0 ~ 2.0
+            return Number((3.0 + randomValue).toFixed(1)); // 3.0 ~ 5.0
+          };
+
+          const calculatePseudoRandomReviews = (idStr: string) => {
+            let hash = 0;
+            for (let i = 0; i < idStr.length; i++) {
+              hash = idStr.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            return 100 + (Math.abs(hash) % 900);
+          };
+
           setPlace({
             ...foundPlace,
             type: foundPlace.category === 'TREND' ? '핫플' : (foundPlace.category === 'HIDDEN' ? '숨은명소' : '명소'),
-            rating: 4.8,
-            reviews_count: 328,
+            rating: calculatePseudoRandomRating(String(placeId)),
+            reviews_count: calculatePseudoRandomReviews(String(placeId)),
             description: foundPlace.description || "해당 장소에 대한 소개가 없습니다.",
             hours: "매일 09:00 - 21:00",
             media_source: foundPlace.media_source || "미디어 명소",
@@ -223,11 +241,30 @@ export default function PlaceDetail() {
         <div className="flex items-center gap-2.5 mb-8">
           <span className="text-[16px] font-semibold font-['Inter'] text-[#FA5252]">{place.rating}</span>
           <div className="flex gap-[2px]">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <svg key={star} width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 0L9.16667 4.58333L14 5.25L10.5 8.66667L11.3333 13.4167L7 11L2.66667 13.4167L3.5 8.66667L0 5.25L4.83333 4.58333L7 0Z" fill="#D9D9D9" />
-              </svg>
-            ))}
+            {[1, 2, 3, 4, 5].map((star) => {
+              const rating = place.rating || 0;
+              let fillPercent = 0;
+              if (rating >= star) {
+                fillPercent = 100;
+              } else if (rating >= star - 1) {
+                fillPercent = (rating - (star - 1)) * 100;
+              }
+
+              return (
+                <div key={star} className="relative w-[14px] h-[14px]">
+                  {/* Empty star background */}
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg" className="absolute top-0 left-0">
+                    <path d="M7 0L9.16667 4.58333L14 5.25L10.5 8.66667L11.3333 13.4167L7 11L2.66667 13.4167L3.5 8.66667L0 5.25L4.83333 4.58333L7 0Z" fill="#D9D9D9" />
+                  </svg>
+                  {/* Filled star foreground */}
+                  <div className="absolute top-0 left-0 overflow-hidden h-full" style={{ width: `${fillPercent}%` }}>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 0L9.16667 4.58333L14 5.25L10.5 8.66667L11.3333 13.4167L7 11L2.66667 13.4167L3.5 8.66667L0 5.25L4.83333 4.58333L7 0Z" fill="#FA5252" />
+                    </svg>
+                  </div>
+                </div>
+              );
+            })}
           </div>
           <span className="text-[14px] font-bold font-['Inter'] text-[#B8B8B8] tracking-[-0.05em] ml-2">
             리뷰 {place.reviews_count}개

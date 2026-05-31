@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Search, MapPin, Heart, ChevronLeft, Calendar } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useSavedStore } from "@/store/useSavedStore";
 
@@ -43,6 +44,10 @@ function SearchContent() {
   const [items, setItems] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const [isFocused, setIsFocused] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+
   const toggleItem = useSavedStore((state) => state.toggleItem);
   const savedItems = useSavedStore((state) => state.savedItems);
   const isSaved = (id: string) => savedItems.some((item) => item.id === id);
@@ -75,6 +80,36 @@ function SearchContent() {
       .finally(() => setIsLoading(false));
   };
 
+  // Debounced search for suggestions
+  useEffect(() => {
+    if (!searchValue.trim()) {
+      setSuggestions([]);
+      setIsSuggesting(false);
+      return;
+    }
+
+    setIsSuggesting(true);
+
+    const delayDebounceFn = setTimeout(() => {
+      fetchJson<any>(`/api/search/suggest?q=${encodeURIComponent(searchValue.trim())}&limit=5`)
+        .then((data) => {
+          if (data?.data?.items && Array.isArray(data.data.items)) {
+            setSuggestions(data.data.items);
+          } else if (data?.items && Array.isArray(data.items)) {
+            setSuggestions(data.items);
+          } else if (Array.isArray(data)) {
+            setSuggestions(data);
+          } else {
+            setSuggestions([]);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setIsSuggesting(false));
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchValue]);
+
   useEffect(() => {
     performSearch(query);
     setSearchValue(query);
@@ -103,9 +138,72 @@ function SearchContent() {
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               onKeyDown={handleSearch}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setTimeout(() => setIsFocused(false), 200)}
               placeholder="어디로 떠나볼까요?"
               className="w-full h-full pl-11 pr-4 bg-transparent border-transparent text-[15px] font-medium outline-none dark:text-white"
             />
+
+            <AnimatePresence>
+              {isFocused && searchValue.trim() && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute left-0 right-0 top-[52px] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl shadow-xl z-50 overflow-hidden py-2"
+                >
+                  {suggestions.length > 0 ? (
+                    suggestions.map((item, idx) => {
+                      const isPlace = item.type === "place";
+                      const isFestival = item.type === "festival";
+                      const itemId = item.id || item.place_id || item.festival_id || idx;
+                      const href = isPlace ? `/place/${itemId}` : (isFestival ? `/festival/${itemId}` : null);
+
+                      const content = (
+                        <div
+                          onMouseDown={(e) => e.preventDefault()} // prevent input blur
+                          className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
+                        >
+                          <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-[14px] font-bold text-gray-900 dark:text-gray-100 truncate">
+                              {item.name || item.title}
+                            </div>
+                            {(item.location || item.date) && (
+                              <div className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
+                                <span className={`inline-block px-1.5 py-0.5 rounded text-[10px] font-bold ${isPlace ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-brand-red/10 text-brand-red'}`}>
+                                  {isPlace ? '장소' : '축제'}
+                                </span>
+                                <span className="truncate">{item.location || item.date}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+
+                      return href ? (
+                        <Link key={`${item.type}-${itemId}`} href={href} className="block">
+                          {content}
+                        </Link>
+                      ) : (
+                        <div key={`${item.type}-${itemId}`} className="opacity-80">
+                          {content}
+                        </div>
+                      );
+                    })
+                  ) : isSuggesting ? (
+                    <div className="px-4 py-8 flex justify-center">
+                      <div className="w-5 h-5 border-2 border-brand-red border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : (
+                    <div className="px-4 py-8 text-center text-[13px] text-gray-500">
+                      검색 결과가 없습니다.
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       </header>
