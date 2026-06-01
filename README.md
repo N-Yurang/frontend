@@ -1,52 +1,52 @@
-# 🚀 TRIPLY - AI Travel Recommendation
+# TRIPLY (트리플리) - Frontend Repository
 
-AI 기반 맞춤형 여행 코스 추천 및 지도 시각화 서비스입니다.
+AI 기반 맞춤형 여행 코스 추천 서비스 'TRIPLY'의 프론트엔드 레포지토리입니다.
 
-## ✨ 새롭게 추가된 기능 (2026-05-12)
+## 프로젝트 소개
+TRIPLY는 사용자의 취향에 맞는 여행 코스를 AI가 추천해주고, 이를 지도에 시각화해서 보여주는 서비스입니다. 
+이 레포지토리는 사용자가 챗봇과 대화하며 일정을 짜고, 카카오맵에서 추천 동선을 확인할 수 있는 프론트엔드 코드를 담고 있습니다.
 
-### 1. AI 챗봇 연동 및 동선 추천
-- **AI 플레이리스터**: 챗봇과 대화하여 맞춤형 여행 코스를 추천받을 수 있습니다.
-- **데이터 연동**: 챗봇이 추천한 장소 데이터를 **Zustand** 전역 스토어에 저장하여 페이지 이동 간 데이터를 유지합니다.
-- **자동 이동**: 추천이 완료되면 '추천 동선 확인하기' 버튼을 통해 즉시 지도 페이지로 이동합니다.
+## 주요 기능
+- AI 챗봇을 통한 맞춤형 여행 코스 추천
+- 카카오맵 API를 활용한 여행 동선 시각화 (방문 순서 마커, 폴리라인 표시)
+- 홈, 검색, 트렌딩, 장소/축제 상세, 마이페이지 등 UI 구현
 
-### 2. 고도화된 지도 시각화 (카카오맵)
-- **넘버링 마커**: 방문 순서가 적힌 커스텀 마커를 표시합니다.
-- **폴리라인 (Polyline)**: 추천 경로를 선으로 연결하여 한눈에 동선을 파악할 수 있습니다.
-- **자동 범위 조절 (Auto-Bounds)**: 모든 추천 장소가 한 화면에 보이도록 지도를 자동으로 조정합니다.
-- **인터랙티브 호버**: 마커에 마우스를 올리면 장소 이름이 나타납니다.
+## 기술 스택
+- Next.js 16 (App Router)
+- TypeScript
+- Tailwind CSS v4
+- Zustand
+- React Kakao Maps SDK
 
----
+## 로컬 실행 방법
 
-## 🛠️ 로컬 개발 및 테스트 가이드
+### 1. 패키지 설치
+```bash
+npm install
+```
 
-### 1. 환경 변수 설정 (`.env`)
-카카오맵 SDK 사용을 위해 아래 키가 필요합니다.
+### 2. 환경 변수 설정
+프로젝트 최상위 폴더에 `.env` 파일을 만들고 아래 키를 추가해주세요.
 ```env
-NEXT_PUBLIC_KAKAO_APP_KEY=45fb98ea25993d555ea0dd5fe334202f
+NEXT_PUBLIC_KAKAO_APP_KEY=발급받은_카카오맵_키
 NEXT_PUBLIC_API_URL=https://triply-backend.onrender.com
 ```
 
-### 2. 로컬 테스트 서버 실행 (중요)
-실제 백엔드 서버 없이 챗봇 및 로그인 기능을 테스트하려면 동봉된 `dummy_server.js`를 실행하세요.
-1. `.env` 파일의 `NEXT_PUBLIC_API_URL`을 `http://127.0.0.1:5001`로 변경합니다.
-2. 새 터미널에서 아래 명령어를 실행합니다.
-   ```bash
-   node dummy_server.js
-   ```
-3. 이제 로그인(아무 계정이나 가능) 및 챗봇 추천 기능을 즉시 테스트할 수 있습니다.
-
-### 3. 프론트엔드 실행
+### 3. 더미 서버 실행 (선택)
+실제 백엔드 없이 챗봇이나 로그인 기능을 테스트해보고 싶다면 포함된 더미 서버를 켜주세요.
+`.env` 파일의 `NEXT_PUBLIC_API_URL`을 `http://127.0.0.1:5001`로 변경한 뒤 터미널에서 아래 명령어를 입력합니다.
 ```bash
-npm install
-npm run dev
+node dummy_server.js
 ```
 
----
+### 4. 프론트엔드 실행
+```bash
+npm run dev
+```
+실행 후 브라우저에서 `http://localhost:3000`으로 접속하시면 됩니다.
 
-## 📦 주요 기술 스택
-- **Framework**: Next.js 15 (App Router)
-- **Styling**: Tailwind CSS
-- **State Management**: Zustand (with Persist middleware)
-- **Map SDK**: React Kakao Maps SDK
-- **Icons**: Lucide React
-- **Animations**: Framer Motion
+## 폴더 구조
+- `src/app/`: Next.js 라우팅 페이지 (home, map, chat, login 등)
+- `src/components/`: 공용 UI 컴포넌트
+- `src/store/`: Zustand 상태 관리
+- `src/lib/` & `src/utils/`: 유틸리티 함수 및 설정 파일
