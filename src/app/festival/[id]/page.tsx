@@ -207,43 +207,59 @@ export default function FestivalDetail() {
 
         {/* Content Details */}
         <div className="w-full flex-1 mb-[90px]">
-          <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
-            소개
-          </h3>
-          <p className="text-[13px] font-medium font-['Inter'] leading-[1.6] text-[#A2A2A2] text-left mb-8 break-keep">
-            {festival.description}
-          </p>
+          {activeTab === "info" && (
+            <>
+              <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
+                소개
+              </h3>
+              <p className="text-[13px] font-medium font-['Inter'] leading-[1.6] text-[#A2A2A2] text-left mb-8 break-keep">
+                {festival.description}
+              </p>
 
-          <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
-            진행 기간
-          </h3>
-          <div className="flex items-start gap-1.5 text-[#626262] mb-8">
-            <CalendarDays className="w-[14px] h-[14px] flex-shrink-0 mt-[2px]" />
-            <p className="text-[13px] font-medium font-['Inter'] leading-[1.6] text-left break-keep text-[#FA5252]">
-              {dateDisplay}
-            </p>
-          </div>
-        </div>
+              <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
+                진행 기간
+              </h3>
+              <div className="flex items-start gap-1.5 text-[#626262] mb-8">
+                <CalendarDays className="w-[14px] h-[14px] flex-shrink-0 mt-[2px]" />
+                <p className="text-[13px] font-medium font-['Inter'] leading-[1.6] text-left break-keep text-[#FA5252]">
+                  {dateDisplay}
+                </p>
+              </div>
 
-        {/* Action Button */}
-        <div className="w-full mt-10 pb-[30px] flex justify-center z-30">
-          <div className="w-full pointer-events-auto">
-            <button
-              onClick={() => {
-                clearChat();
-                if (festival.name) {
-                  sendMessage(`${appendEulReul(festival.name)} 일정으로 코스를 짜줘`);
-                }
-                router.push('/chat');
-              }}
-              className="w-full h-[52px] rounded-[15px] bg-gradient-to-r from-[#FA5654] to-[#FF8970] flex justify-center items-center gap-[13px] transition-transform active:scale-95 shadow-lg shadow-[#FA5654]/20"
-            >
-              <CourseUpIcon />
-              <span className="text-[16px] font-extrabold font-['Inter'] text-white">
-                이걸로 코스 짜기
-              </span>
-            </button>
-          </div>
+              {/* Action Button */}
+              <div className="w-full mt-8 pb-[30px] flex justify-center z-30">
+                <div className="w-full pointer-events-auto">
+                  <button
+                    onClick={() => {
+                      clearChat();
+                      if (festival.name) {
+                        sendMessage(`${appendEulReul(festival.name)} 일정으로 코스를 짜줘`);
+                      }
+                      router.push('/chat');
+                    }}
+                    className="w-full h-[52px] rounded-[15px] bg-gradient-to-r from-[#FA5654] to-[#FF8970] flex justify-center items-center gap-[13px] transition-transform active:scale-95 shadow-lg shadow-[#FA5654]/20"
+                  >
+                    <CourseUpIcon />
+                    <span className="text-[16px] font-extrabold font-['Inter'] text-white">
+                      이걸로 코스 짜기
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === "reviews" && (
+            <div className="flex justify-center items-center py-16">
+              <p className="text-[14px] font-medium text-[#A2A2A2]">현재 작성된 리뷰가 없습니다.</p>
+            </div>
+          )}
+
+          {activeTab === "photos" && (
+            <div className="flex justify-center items-center py-16">
+              <p className="text-[14px] font-medium text-[#A2A2A2]">현재 등록된 사진이 없습니다.</p>
+            </div>
+          )}
         </div>
 
       </div>

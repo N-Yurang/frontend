@@ -76,9 +76,9 @@ export default function PlaceDetail() {
 
   useEffect(() => {
     loadSavedItems();
-    
+
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5001';
-    
+
     Promise.all([
       fetch(`${API_BASE_URL}/api/places/filter`).then(res => {
         if (!res.ok) throw new Error(`Filter API failed: ${res.status}`);
@@ -94,7 +94,7 @@ export default function PlaceDetail() {
         if (filterData?.status === "success" && filterData.data?.places) {
           allPlaces = [...filterData.data.places];
         }
-        
+
         if (trendsData?.status === "success" && trendsData.data?.places) {
           trendsData.data.places.forEach((tp: any) => {
             const idx = allPlaces.findIndex(p => String(p.place_id) === String(tp.place_id));
@@ -267,7 +267,7 @@ export default function PlaceDetail() {
             })}
           </div>
           <span className="text-[14px] font-bold font-['Inter'] text-[#B8B8B8] tracking-[-0.05em] ml-2">
-            리뷰 {place.reviews_count}개
+            리뷰 0개
           </span>
         </div>
 
@@ -284,8 +284,8 @@ export default function PlaceDetail() {
               className="relative flex-1 text-center pb-3 transition-colors"
             >
               <span className={`text-[14px] font-semibold font-['Inter'] tracking-[-0.05em] ${activeTab === tab.id
-                  ? "bg-gradient-to-b from-[#FB5B57] to-[#FE876F] text-transparent bg-clip-text"
-                  : "text-[#BDBDBD]"
+                ? "bg-gradient-to-b from-[#FB5B57] to-[#FE876F] text-transparent bg-clip-text"
+                : "text-[#BDBDBD]"
                 }`}>
                 {tab.label}
               </span>
@@ -298,58 +298,74 @@ export default function PlaceDetail() {
 
         {/* Content Details */}
         <div className="w-full flex-1 mb-[90px]">
-          <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
-            소개
-          </h3>
-          <p className="text-[13px] font-medium font-['Inter'] leading-[1.6] text-[#A2A2A2] text-left mb-8 break-keep">
-            {place.description}
-          </p>
-
-          <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
-            운영시간
-          </h3>
-          <div className="flex items-start gap-1.5 text-[#626262] mb-8">
-            <Clock className="w-[14px] h-[14px] flex-shrink-0 mt-[2px]" />
-            <p className="text-[13px] font-medium font-['Inter'] leading-[1.6] text-left break-keep">
-              {place.hours}
-            </p>
-          </div>
-
-          {place.tags && place.tags.length > 0 && (
+          {activeTab === "info" && (
             <>
               <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
-                태그
+                소개
               </h3>
-              <div className="flex flex-wrap gap-2">
-                {normalizeTags(place.tags).map((tag: string, index: number) => (
-                  <span key={index} className="px-3 py-1.5 bg-gray-50 border border-gray-100 text-[#FA5252] rounded-xl text-[12px] font-bold tracking-tight">
-                    #{tag}
-                  </span>
-                ))}
+              <p className="text-[13px] font-medium font-['Inter'] leading-[1.6] text-[#A2A2A2] text-left mb-8 break-keep">
+                {place.description}
+              </p>
+
+              <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
+                운영시간
+              </h3>
+              <div className="flex items-start gap-1.5 text-[#626262] mb-8">
+                <Clock className="w-[14px] h-[14px] flex-shrink-0 mt-[2px]" />
+                <p className="text-[13px] font-medium font-['Inter'] leading-[1.6] text-left break-keep">
+                  {place.hours}
+                </p>
+              </div>
+
+              {place.tags && place.tags.length > 0 && (
+                <>
+                  <h3 className="text-[14px] font-bold font-['Inter'] tracking-[-0.05em] text-black mb-3 text-left">
+                    태그
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {normalizeTags(place.tags).map((tag: string, index: number) => (
+                      <span key={index} className="px-3 py-1.5 bg-gray-50 border border-gray-100 text-[#FA5252] rounded-xl text-[12px] font-bold tracking-tight">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </>
+              )}
+
+              {/* Action Button */}
+              <div className="w-full mt-8 pb-[30px] flex justify-center z-30">
+                <div className="w-full pointer-events-auto">
+                  <button
+                    onClick={() => {
+                      clearChat();
+                      if (place.name) {
+                        sendMessage(`${appendEulReul(place.name)} 포함해서 코스를 짜줘`);
+                      }
+                      router.push('/chat');
+                    }}
+                    className="w-full h-[52px] rounded-[15px] bg-gradient-to-r from-[#FA5654] to-[#FF8970] flex justify-center items-center gap-[13px] transition-transform active:scale-95 shadow-lg shadow-[#FA5654]/20"
+                  >
+                    <CourseUpIcon />
+                    <span className="text-[16px] font-extrabold font-['Inter'] text-white">
+                      이걸로 코스 짜기
+                    </span>
+                  </button>
+                </div>
               </div>
             </>
           )}
-        </div>
 
-        {/* Action Button */}
-        <div className="w-full mt-10 pb-[30px] flex justify-center z-30">
-          <div className="w-full pointer-events-auto">
-            <button
-              onClick={() => {
-                clearChat();
-                if (place.name) {
-                  sendMessage(`${appendEulReul(place.name)} 포함해서 코스를 짜줘`);
-                }
-                router.push('/chat');
-              }}
-              className="w-full h-[52px] rounded-[15px] bg-gradient-to-r from-[#FA5654] to-[#FF8970] flex justify-center items-center gap-[13px] transition-transform active:scale-95 shadow-lg shadow-[#FA5654]/20"
-            >
-              <CourseUpIcon />
-              <span className="text-[16px] font-extrabold font-['Inter'] text-white">
-                이걸로 코스 짜기
-              </span>
-            </button>
-          </div>
+          {activeTab === "reviews" && (
+            <div className="flex justify-center items-center py-16">
+              <p className="text-[14px] font-medium text-[#A2A2A2]">현재 작성된 리뷰가 없습니다.</p>
+            </div>
+          )}
+
+          {activeTab === "photos" && (
+            <div className="flex justify-center items-center py-16">
+              <p className="text-[14px] font-medium text-[#A2A2A2]">현재 등록된 사진이 없습니다.</p>
+            </div>
+          )}
         </div>
 
       </div>
