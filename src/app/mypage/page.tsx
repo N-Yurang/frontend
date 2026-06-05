@@ -56,6 +56,7 @@ function mapPlaylistPlacesToRecommendations(places: any[]): RecommendedPlace[] {
     recommendations.push({
       order: Number(place.visit_order ?? place.order ?? index + 1),
       place_id: place.place_id,
+      detail_id: place.detail_id,
       name: String(place.name || place.title || "이름 없는 장소"),
       lat,
       lng,
@@ -367,7 +368,7 @@ export default function MyPage() {
 
               const chatStore = useChatStore.getState();
               useRecommendationStore.getState().setRecommendations(recommendations, selectedPlaylist.title);
-              chatStore.setCurrentItinerary(recommendations);
+              chatStore.setCurrentItinerary(null); // Clear chat itinerary so the button doesn't show in chat
               chatStore.setCurrentCourseName(selectedPlaylist.title);
               chatStore.setRecommendedItineraryId(null);
               chatStore.setSavedCourseId(selectedPlaylist.course_id ? String(selectedPlaylist.course_id) : null);

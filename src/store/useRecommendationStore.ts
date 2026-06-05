@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 
 export interface RecommendedPlace {
   place_id?: string | number;
+  detail_id?: number;
   order: number;
   name: string;
   lat: number;

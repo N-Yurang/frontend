@@ -281,6 +281,7 @@ export default function CourseMap() {
         return {
           id: p.name + p.lat + idx, // Unique string id for Reorder
           place_id: p.place_id,
+          detail_id: p.detail_id,
           name: p.name,
           desc: p.desc || p.type || "AI 추천 장소",
           duration: p.duration || "예정",
@@ -306,6 +307,7 @@ export default function CourseMap() {
     const newRecs: RecommendedPlace[] = currentPlaces.map((p, idx) => ({
       order: idx + 1,
       place_id: p.place_id,
+      detail_id: p.detail_id,
       name: p.name,
       lat: p.lat,
       lng: p.lng,
@@ -324,12 +326,49 @@ export default function CourseMap() {
     saveToStore(newOrder);
   };
 
-  const saveMemoToState = (placeId: string | number, newMemo: string) => {
+  const saveMemoToState = async (placeId: string | number, newMemo: string) => {
+    let trimmedMemo: string | null = newMemo?.trim() || null;
+    if (trimmedMemo && trimmedMemo.length > 1000) {
+      setToast({ type: "warning", message: "메모는 최대 1000자까지 입력 가능합니다." });
+      return;
+    }
+
+    const targetPlace = places.find(p => p.id === placeId);
+    if (!targetPlace) return;
+
+    if (savedCourseId && targetPlace.detail_id) {
+      try {
+        const token = localStorage.getItem("triply_token");
+        const res = await fetch(`${getApiBaseUrl()}/api/courses/${savedCourseId}/details/${targetPlace.detail_id}/memo`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: JSON.stringify({ memo: trimmedMemo })
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          setToast({ type: "error", message: data.message || "메모 저장에 실패했습니다." });
+          return;
+        }
+      } catch (error) {
+        console.error("Memo save error:", error);
+        setToast({ type: "error", message: "메모 저장 중 오류가 발생했습니다." });
+        return;
+      }
+    }
+
     const newPlaces = places.map(p =>
-      p.id === placeId ? { ...p, memo: newMemo } : p
+      p.id === placeId ? { ...p, memo: trimmedMemo } : p
     );
     setPlaces(newPlaces);
     saveToStore(newPlaces);
+
+    if (savedCourseId && targetPlace.detail_id) {
+      setToast({ type: "success", message: "메모가 저장되었습니다." });
+    }
   };
 
   const handleShuffle = () => {
@@ -389,7 +428,9 @@ export default function CourseMap() {
       let response: Response | null = null;
       let result: unknown = {};
 
-      if (recommendedItineraryId) {
+      const hasUserEdits = places.some(p => !!p.memo?.trim());
+
+      if (recommendedItineraryId && !hasUserEdits) {
         const apiUrl = `${getApiBaseUrl()}/api/courses/from-itinerary/${recommendedItineraryId}`;
 
         response = await fetch(apiUrl, {
